@@ -22,14 +22,11 @@ public abstract class ShadowOutputAbs<DE_IN, DE_OUT> implements ShadowOutput<DE_
   /**
    * if decodec doesn't exist, we will use content directly.
    * @param content
-   * @return Object
+   * @return DE_OUT
    */
-  protected Object defaultContent(DE_IN content) {
-    if (decodec.isPresent()) {
-      return decodec.get().translate(content);
-    } else {
-      return content;
-    }
+  @SuppressWarnings("unchecked")
+  protected DE_OUT defaultContent(DE_IN content) {
+    return decodec.map(decodec -> decodec.translate(content)).orElse((DE_OUT) content);
   }
 
 }

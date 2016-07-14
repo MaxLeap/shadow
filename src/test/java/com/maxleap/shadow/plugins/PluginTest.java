@@ -3,9 +3,6 @@ package com.maxleap.shadow.plugins;
 import com.maxleap.shadow.ParserEngine;
 import com.maxleap.shadow.ShadowInput;
 import com.maxleap.shadow.impl.engine.nashorn.NashornParserEngine;
-import com.maxleap.shadow.impl.plugins.input.dir.ShadowInputDir;
-import com.maxleap.shadow.impl.plugins.input.forward.ShadowInputForward;
-import com.maxleap.shadow.impl.plugins.input.http.ShadowInputHttp;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -60,7 +57,7 @@ public class PluginTest {
     }).listen(listenHandler -> {
       parserFuture
           .thenCompose(aVoid -> {
-            ShadowInput httpInput = parserEngine.getShadowInput(ShadowInputHttp.class);
+            ShadowInput httpInput = parserEngine.getShadowInput("http");
             return httpInput.start();
           })
           .whenComplete((a, throwable) -> {
@@ -91,7 +88,7 @@ public class PluginTest {
 
     parserFuture
         .thenCompose(bVoid -> {
-          ShadowInput input = parserEngine.getShadowInput(ShadowInputForward.class);
+          ShadowInput input = parserEngine.getShadowInput("forward");
           return input.start();
         })
         .whenComplete((a, throwable) -> {
@@ -109,7 +106,7 @@ public class PluginTest {
     Async async = context.async();
     parserFuture
         .thenCompose(aVoid -> {
-          ShadowInput shadowInput = parserEngine.getShadowInput(ShadowInputDir.class);
+          ShadowInput shadowInput = parserEngine.getShadowInput("dir");
           return shadowInput.start();
         })
         .whenComplete((a, throwable) -> {

@@ -4,7 +4,6 @@ import com.maxleap.shadow.*;
 import com.maxleap.shadow.impl.plugins.input.ShadowInputAbs;
 import com.maxleap.shadow.impl.plugins.output.ShadowOutputAbs;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -109,13 +108,13 @@ public class NashornParserEngine implements ParserEngine {
   }
 
   @Override
-  public <T extends ShadowInput> ShadowInput getShadowInput(Class<T> clazz) {
-    return inputPlugins.get(clazz.getName());
+  public ShadowInput getShadowInput(String pluginName) {
+    return inputPlugins.get(pluginName);
   }
 
   @Override
-  public <T extends ShadowOutput> ShadowOutput getShadowOutput(Class<T> clazz) {
-    return outputPlugins.get(clazz.getName());
+  public ShadowOutput getShadowOutput(String pluginName) {
+    return outputPlugins.get(pluginName);
   }
 
   private CompletableFuture<Void> loadPlugins() {
@@ -129,29 +128,32 @@ public class NashornParserEngine implements ParserEngine {
       .thenCompose((aVoid) -> {
         ScriptObjectMirror shadowInput = (ScriptObjectMirror) engine.get("shadowInput");
         CompletableFuture[] inputInitFutures = shadowInput.entrySet().stream()
-          .map(entry -> getInputPlugin((ScriptObjectMirror) entry.getValue()))
+          .map(this::getInputPlugin)
           .collect(Collectors.toList())
           .toArray(new CompletableFuture[shadowInput.entrySet().size()]);
         return CompletableFuture.allOf(inputInitFutures);
       });
   }
 
-  private CompletableFuture<Void> getInputPlugin(ScriptObjectMirror inputPluginDesc) {
+  private CompletableFuture<Void> getInputPlugin(Map.Entry<String, Object> inputEntry) {
     //TODO:split all the plugin to process, so we can reload them.
-    String pluginClassPath = (String) inputPluginDesc.get("pluginClass");
+    String inputPluginName = inputEntry.getKey();
+    ScriptObjectMirror inputPluginJS = (ScriptObjectMirror) inputEntry.getValue();
+    String pluginClassPath = (String) inputPluginJS.get("pluginClass");
     CompletableFuture<Void> future = new CompletableFuture<>();
     try {
       ShadowInputAbs shadowInputPlugin = loadClass(classLoader, pluginClassPath);
       //inject default output plugins
-      Map<String, Object> outputConfig = (Map<String, Object>) inputPluginDesc.get("output");
-      if (outputConfig != null) {
-        shadowInputPlugin.setOutputPlugin(outputPlugins.get(outputConfig.get("pluginClass")));
+      String outputName = (String) inputPluginJS.get("shadowOutputName");
+      if (outputName != null) {
+        shadowInputPlugin.setOutputPlugin(outputPlugins.get(outputName));
       } else {
+        //TODO std out
         shadowInputPlugin.setOutputPlugin(outputPlugins.get(DEFAULT_OUTPUT_CLASS_PATH));
       }
 
       //inject codec TODO refactor
-      String decodecClassPath = (String) inputPluginDesc.get("decodec");
+      String decodecClassPath = (String) inputPluginJS.get("decodec");
       if (decodecClassPath != null) {
         try {
           shadowInputPlugin.setDecodec(loadCodec(decodecClassPath));
@@ -160,7 +162,7 @@ public class NashornParserEngine implements ParserEngine {
         }
       }
 
-      String encodecClassPath = (String) inputPluginDesc.get("encodec");
+      String encodecClassPath = (String) inputPluginJS.get("encodec");
       if (encodecClassPath != null) {
         try {
           shadowInputPlugin.setEncodec(loadCodec(encodecClassPath));
@@ -169,9 +171,9 @@ public class NashornParserEngine implements ParserEngine {
         }
       }
 
-      Map<String, Object> config = (Map<String, Object>) inputPluginDesc.get("config");
+      Map<String, Object> config = (Map<String, Object>) inputPluginJS.get("config");
       future = shadowInputPlugin.init(vertx, new ShadowConfig(config)).thenAccept(aVoid -> {
-        inputPlugins.put(pluginClassPath, shadowInputPlugin);
+        inputPlugins.put(inputPluginName, shadowInputPlugin);
         logger.info(String.format("init %s success.", pluginClassPath));
       });
     } catch (ShadowException e) {
@@ -184,10 +186,11 @@ public class NashornParserEngine implements ParserEngine {
   private CompletableFuture<Void> getOutputPlugin(Map.Entry<String, Object> outputEntry) {
     Map<String, Object> outputPluginJS = (Map<String, Object>) outputEntry.getValue();
     CompletableFuture<Void> future = new CompletableFuture<>();
+    String outputPluginName = outputEntry.getKey();
     String pluginClassPath = (String) outputPluginJS.get("pluginClass");
     String decodecClassPath = (String) outputPluginJS.get("decodec");
     //
-    JsonObject outputConfig = new JsonObject((Map<String, Object>) outputPluginJS.get("config"));
+    Map<String, Object> outputConfig = (Map<String, Object>) outputPluginJS.get("config");
     try {
       ShadowOutput shadowOutputPlugin = loadClass(classLoader, pluginClassPath);
       if (decodecClassPath != null) {
@@ -195,7 +198,7 @@ public class NashornParserEngine implements ParserEngine {
         ((ShadowOutputAbs) shadowOutputPlugin).setDecodec(shadowCodec);
       }
       future = shadowOutputPlugin.init(vertx, new ShadowConfig(outputConfig)).thenAccept(aVoid -> {
-        outputPlugins.put(pluginClassPath, shadowOutputPlugin);
+        outputPlugins.put(outputPluginName, shadowOutputPlugin);
         logger.info(String.format("load output plugin %s success.", outputEntry.getKey()));
       });
     } catch (ShadowException e) {

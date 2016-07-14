@@ -8,34 +8,49 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * Created by stream.
  */
 public class ShadowOutputHttp<DE_IN> extends ShadowOutputAbs<DE_IN, String> implements ShadowOutput<DE_IN> {
 
-  private HttpClient httpClient;
+  private List<HttpClient> httpClients = new ArrayList<>();
   private String uri;
+  private int currentIndex = 0;
 
   private static final Logger logger = LoggerFactory.getLogger(ShadowOutput.class);
 
   @Override
   public CompletableFuture<Void> init(Vertx vertx, ShadowConfig rootConfig) {
-    HttpClientOptions httpClientOptions = new HttpClientOptions()
-      .setDefaultHost(rootConfig.getString("host", "localhost"))
-      .setDefaultPort(rootConfig.getInteger("port", 8081));
     uri = rootConfig.getString("uri", "/");
-    httpClient = vertx.createHttpClient(httpClientOptions);
+    //TODO check jsonArray length
+    httpClients = rootConfig.getJsonArray("hosts").stream()
+      .map(s -> (String) s)
+      .map(s -> {
+        String[] hostAndPort = s.split(":");
+        HttpClientOptions httpClientOptions = new HttpClientOptions()
+          .setDefaultHost(hostAndPort[0])
+          .setDefaultPort(Integer.valueOf(hostAndPort[1]));
+        return vertx.createHttpClient(httpClientOptions);
+      })
+      .collect(Collectors.toList());
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public void execute(DE_IN content) {
+    //Round robin
+    HttpClient httpClient = httpClients.get(currentIndex >= httpClients.size() ? 0 : currentIndex);
+    currentIndex++;
+
     httpClient
       .post(uri)
       .handler(response -> {
-        if (response.statusCode() != 200) {
+        if (response.statusCode() < 200 || response.statusCode() > 399) {
           logger.warn(String.format("send http message failed, http code %s, http message %s", response.statusCode(), response.statusMessage()));
         }
       })
@@ -45,7 +60,7 @@ public class ShadowOutputHttp<DE_IN> extends ShadowOutputAbs<DE_IN, String> impl
 
   @Override
   public CompletableFuture<Void> stop() {
-    httpClient.close();
+    httpClients.stream().forEach(HttpClient::close);
     return CompletableFuture.completedFuture(null);
   }
 }

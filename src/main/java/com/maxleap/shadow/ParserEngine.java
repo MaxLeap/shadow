@@ -16,7 +16,7 @@ public interface ParserEngine {
 
   CompletableFuture<Void> start();
 
-  <T extends ShadowInput> ShadowInput getShadowInput(Class<T> clazz);
+  ShadowInput getShadowInput(String pluginName);
 
-  <T extends ShadowOutput> ShadowOutput getShadowOutput(Class<T> clazz);
+  ShadowOutput getShadowOutput(String pluginName);
 }

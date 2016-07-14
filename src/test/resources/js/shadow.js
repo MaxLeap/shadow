@@ -25,9 +25,8 @@ var shadowOutput = {
   http: {
     pluginClass : "com.maxleap.shadow.impl.plugins.output.ShadowOutputHttp",
     config : {
-      host:"localhost",
-      port:8081,
-      uri:"/test/logs"
+      uri:"/test/logs",
+      hosts:["localhost:8081", "localhost:8082"]
     }
   }
 };
@@ -37,7 +36,7 @@ var shadowOutput = {
 var shadowInput = {
   dir : {
     pluginClass:"com.maxleap.shadow.impl.plugins.input.dir.ShadowInputDir",
-    output : shadowOutput.file,
+    shadowOutputName : "file",
     decodec : "com.maxleap.shadow.impl.codec.LineFeed",
     encodec : "com.maxleap.shadow.impl.codec.MapToJson",
 
@@ -62,7 +61,7 @@ var shadowInput = {
   //startup a http server for receive logs
   http : {
     pluginClass:"com.maxleap.shadow.impl.plugins.input.http.ShadowInputHttp",
-    output:shadowOutput.http,
+    shadowOutputName : "http",
     decodec : "com.maxleap.shadow.impl.codec.StringToMap",
     encodec : "com.maxleap.shadow.impl.codec.MapToJson",
 
@@ -96,7 +95,7 @@ var shadowInput = {
 
   forward:{
     pluginClass:"com.maxleap.shadow.impl.plugins.input.forward.ShadowInputForward",
-    output:shadowOutput.forward,
+    shadowOutputName : "forward",
     decodec : "com.maxleap.shadow.impl.codec.JsonToMap",
     encodec : "com.maxleap.shadow.impl.codec.MapToJson",
     config : {

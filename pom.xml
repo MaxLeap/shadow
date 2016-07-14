@@ -6,12 +6,12 @@
 
   <groupId>com.maxleap</groupId>
   <artifactId>shadow</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 
   <properties>
     <log4j2.version>2.5</log4j2.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <vertx-stack.version>3.3.0</vertx-stack.version>
+    <vertx-stack.version>3.3.2</vertx-stack.version>
     <junit.version>4.12</junit.version>
     <plugin.docker.version>0.3.5</plugin.docker.version>
     <plugin.maven.compile.version>3.3</plugin.maven.compile.version>
