@@ -25,8 +25,8 @@ var shadowOutput = {
   http: {
     pluginClass : "com.maxleap.shadow.impl.plugins.output.ShadowOutputHttp",
     config : {
-      uri:"/test/logs",
-      hosts:["localhost:8081", "localhost:8082"]
+      uri:"/logs/service",
+      hosts:["10.10.10.136:9200", "10.10.10.136:9200"]
     }
   }
 };

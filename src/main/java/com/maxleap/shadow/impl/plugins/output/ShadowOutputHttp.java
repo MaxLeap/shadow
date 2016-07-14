@@ -35,6 +35,7 @@ public class ShadowOutputHttp<DE_IN> extends ShadowOutputAbs<DE_IN, String> impl
         HttpClientOptions httpClientOptions = new HttpClientOptions()
           .setDefaultHost(hostAndPort[0])
           .setDefaultPort(Integer.valueOf(hostAndPort[1]));
+        logger.info("host " + hostAndPort[0] + " port " + hostAndPort[1]);
         return vertx.createHttpClient(httpClientOptions);
       })
       .collect(Collectors.toList());
@@ -46,12 +47,12 @@ public class ShadowOutputHttp<DE_IN> extends ShadowOutputAbs<DE_IN, String> impl
     //Round robin
     HttpClient httpClient = httpClients.get(currentIndex >= httpClients.size() ? 0 : currentIndex);
     currentIndex++;
-
     httpClient
       .post(uri)
       .handler(response -> {
         if (response.statusCode() < 200 || response.statusCode() > 399) {
-          logger.warn(String.format("send http message failed, http code %s, http message %s", response.statusCode(), response.statusMessage()));
+          logger.warn(String.format("send http message failed, http code %s, http message %s, uri %s",
+            response.statusCode(), response.statusMessage(), uri));
         }
       })
       .exceptionHandler(ex -> logger.error(ex.getMessage(), ex))

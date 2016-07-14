@@ -30,8 +30,7 @@ public class NashornParserEngine implements ParserEngine {
   private Map<String, ShadowOutput> outputPlugins = new HashMap<>();
   private Map<String, ShadowCodec> codecs = new HashMap<>();
 
-  //default using stdout for output.
-  private static final String DEFAULT_OUTPUT_CLASS_PATH = "as.leap.shadow.impl.plugins.output.shadowOutputStdout";
+  private static final String DEFAULT_OUTPUT_NAME = "stdout";
   private static final Logger logger = LoggerFactory.getLogger(NashornParserEngine.class);
 
   public NashornParserEngine(Vertx vertx) {
@@ -149,7 +148,7 @@ public class NashornParserEngine implements ParserEngine {
         shadowInputPlugin.setOutputPlugin(outputPlugins.get(outputName));
       } else {
         //TODO std out
-        shadowInputPlugin.setOutputPlugin(outputPlugins.get(DEFAULT_OUTPUT_CLASS_PATH));
+        shadowInputPlugin.setOutputPlugin(outputPlugins.get(DEFAULT_OUTPUT_NAME));
       }
 
       //inject codec TODO refactor
