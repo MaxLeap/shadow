@@ -54,7 +54,7 @@ var shadowInput = {
         }
       ]
     }
-  }
+  },
 
   //startup a http server for receive logs
   http : {

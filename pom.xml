@@ -13,9 +13,8 @@
     <slf4j.version>1.7.21</slf4j.version>
     <vertx-stack.version>3.3.2</vertx-stack.version>
     <junit.version>4.12</junit.version>
-    <plugin.docker.version>0.3.5</plugin.docker.version>
+    <plugin.docker.version>0.4.11</plugin.docker.version>
     <plugin.maven.compile.version>3.3</plugin.maven.compile.version>
-    <docker.repository>10.10.10.160:8010</docker.repository>
   </properties>
 
   <dependencyManagement>
@@ -92,9 +91,8 @@
         <artifactId>docker-maven-plugin</artifactId>
         <version>${plugin.docker.version}</version>
         <configuration>
-          <imageName>${docker.repository}/maxleap/${project.artifactId}:${project.version}</imageName>
+          <imageName>maxleap/${project.artifactId}:${project.version}</imageName>
           <dockerDirectory>docker</dockerDirectory>
-          <registryUrl>https://${docker.repository}/</registryUrl>
           <resources>
             <resource>
               <targetPath>/</targetPath>

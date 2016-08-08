@@ -2,14 +2,14 @@ FROM maxleap/jdk8:91
 MAINTAINER Stream.Liu <xxliu@maxleap.com>
 
 RUN \
-mkdir -p /opt/shadow/lib && \
-mkdir -p /opt/shadow/js && \
-mkdir -p /opt/shadow/conf
+mkdir -p /opt/tools/shadow/lib && \
+mkdir -p /opt/tools/shadow/js && \
+mkdir -p /opt/tools/shadow/conf
 
-ADD lib/ /opt/shadow/lib/
-ADD js/ /opt/shadow/js/
-ADD conf/ /opt/shadow/conf/
-ADD start.sh /opt/shadow/
+ADD lib/ /opt/tools/shadow/lib/
+ADD js/ /opt/tools/shadow/js/
+ADD conf/ /opt/tools/shadow/conf/
+ADD start.sh /opt/tools/shadow/
 
-WORKDIR /opt/shadow/
-CMD ["/opt/shadow/start.sh"]
+WORKDIR /opt/tools/shadow/
+ENTRYPOINT ["start.sh"]
