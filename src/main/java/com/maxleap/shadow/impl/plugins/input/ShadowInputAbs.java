@@ -29,7 +29,7 @@ public abstract class ShadowInputAbs<DE_IN, DE_OUT, EN_IN, EN_OUT> implements Sh
 
   /**
    * if decodec doesn't exist, we will use content directly.
-   * @param content
+   * @param content default content
    * @return Object
    */
   protected Object defaultContent(DE_IN content) {

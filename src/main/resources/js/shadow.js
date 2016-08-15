@@ -1,7 +1,8 @@
 //output
 var shadowOutput = {
   stdout: {
-    pluginClass : "com.maxleap.shadow.impl.plugins.output.ShadowOutputStdout"
+    pluginClass : "com.maxleap.shadow.impl.plugins.output.ShadowOutputStdout",
+    config : {}
   }
 };
 
@@ -10,18 +11,18 @@ var shadowOutput = {
 var shadowInput = {
   dir : {
     pluginClass:"com.maxleap.shadow.impl.plugins.input.dir.ShadowInputDir",
-    output : shadowOutput.stdout,
+    output : "stdout",
     decodec : "com.maxleap.shadow.impl.codec.LineFeed",
     encodec : "com.maxleap.shadow.impl.codec.MapToJson",
 
     config : {
-      tail:false,
       paths : [{
-         startPath:"./",
-         pattern:".*.log", //this could be regex express
+         startPath:"./logs",
+         pattern:".*-json.log", //this could be regex express
          match:function(fileFullPath, logContent) {
-            //return a javascript object
-            return parser.dirMatch(fileFullPath, logContent);
+            var jsonLog = JSON.parse(logContent);
+            jsonLog.filePath = fileFullPath;
+            return jsonLog;
           }
         }
       ]

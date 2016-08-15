@@ -17,14 +17,12 @@ public class ShadowMain {
 
   public static void main(String[] args) {
     VertxOptions vertxOptions = new VertxOptions();
-    //vertxOptions.setBlockedThreadCheckInterval(10000000);
     Vertx vertx = Vertx.vertx(vertxOptions);
     final ParserEngine parserEngine = new NashornParserEngine(vertx);
 
     vertx.fileSystem().readFile("conf/config.json", fileEvent -> {
       if (fileEvent.succeeded()) {
         JsonObject config = new JsonObject(new String(fileEvent.result().getBytes()));
-
         //"/Users/stream/codes/java/leap/shadow/src/main/resources/js"
         parserEngine.init(config.getString("scriptLocalPath"))
           .thenCompose(aVoid -> parserEngine.start())
