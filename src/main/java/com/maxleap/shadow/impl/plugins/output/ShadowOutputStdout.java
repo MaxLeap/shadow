@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Created by stream.
  */
-public class ShadowOutputStdout<DE_IN, DE_OUT> extends ShadowOutputAbs<DE_IN, DE_OUT> implements ShadowOutput<DE_IN> {
+public class ShadowOutputStdout<IN, OUT> extends ShadowOutputAbs<IN, OUT> implements ShadowOutput<IN> {
 
   @Override
   public CompletableFuture<Void> init(Vertx vertx, ShadowConfig rootConfig) {
@@ -17,7 +17,7 @@ public class ShadowOutputStdout<DE_IN, DE_OUT> extends ShadowOutputAbs<DE_IN, DE
   }
 
   @Override
-  public void execute(DE_IN content) {
+  public void execute(IN content) {
     System.out.println(defaultContent(content));
   }
 

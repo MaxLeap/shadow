@@ -7,11 +7,11 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Created by stream.
  */
-public interface ShadowOutput<DE_IN> {
+public interface ShadowOutput<T> {
 
   CompletableFuture<Void> init(Vertx vertx, ShadowConfig rootConfig);
 
-  void execute(DE_IN content);
+  void execute(T content);
 
   CompletableFuture<Void> stop();
 

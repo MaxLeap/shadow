@@ -2,20 +2,18 @@ package com.maxleap.shadow.impl.plugins.output;
 
 import com.maxleap.shadow.ShadowCodec;
 import com.maxleap.shadow.ShadowOutput;
-import com.maxleap.shadow.impl.codec.ObjectToString;
+import com.maxleap.shadow.impl.FnInvoker;
 
 import java.util.Optional;
 
 /**
  * Created by stream.
  */
-public abstract class ShadowOutputAbs<DE_IN, DE_OUT> implements ShadowOutput<DE_IN> {
+public abstract class ShadowOutputAbs<IN, OUT> implements ShadowOutput<IN>, FnInvoker {
 
-  protected Optional<ShadowCodec<DE_IN, DE_OUT>> decodec = Optional.empty();
+  protected Optional<ShadowCodec<IN, OUT>> decodec = Optional.empty();
 
-  protected ShadowCodec<DE_IN, String> defaultDecodec = new ObjectToString<>();
-
-  public void setDecodec(ShadowCodec<DE_IN, DE_OUT> decodec) {
+  public void setDecodec(ShadowCodec<IN, OUT> decodec) {
     this.decodec = Optional.ofNullable(decodec);
   }
 
@@ -25,8 +23,8 @@ public abstract class ShadowOutputAbs<DE_IN, DE_OUT> implements ShadowOutput<DE_
    * @return DE_OUT
    */
   @SuppressWarnings("unchecked")
-  protected DE_OUT defaultContent(DE_IN content) {
-    return decodec.map(decodec -> decodec.translate(content)).orElse((DE_OUT) content);
+  protected OUT defaultContent(IN content) {
+    return decodec.map(decodec -> decodec.translate(content)).orElse((OUT) content);
   }
 
 }

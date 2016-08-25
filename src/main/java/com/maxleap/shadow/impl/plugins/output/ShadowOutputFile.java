@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Created by stream.
  */
-public class ShadowOutputFile<DE_IN> extends ShadowOutputAbs<DE_IN, String> implements ShadowOutput<DE_IN> {
+public class ShadowOutputFile<IN> extends ShadowOutputAbs<IN, String> implements ShadowOutput<IN> {
 
   private AsyncFile asyncFile;
   private OpenOptions openOptions = new OpenOptions()
@@ -42,8 +42,8 @@ public class ShadowOutputFile<DE_IN> extends ShadowOutputAbs<DE_IN, String> impl
   }
 
   @Override
-  public void execute(DE_IN content) {
-    asyncFile.write(Buffer.buffer(decodec.orElse(defaultDecodec).translate(content)));
+  public void execute(IN content) {
+    asyncFile.write(Buffer.buffer(defaultContent(content)));
   }
 
   @Override

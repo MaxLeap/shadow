@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
   <Appenders>
-    <RollingFile name="RollingJsonFile" fileName="/opt/tools/shadow/logs/shadow-json.log"
-                 filePattern="/opt/tools/shadow/logs/shadow-json.%i">
+    <RollingFile name="RollingJsonFile" fileName="/opt/logs/tools/shadow/shadow-json.log"
+                 filePattern="/opt/logs/tools/shadow/shadow-json.%i">
       <MaxLeapJsonLayout/>
       <DefaultRolloverStrategy max="2"/>
       <Policies>

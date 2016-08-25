@@ -3,40 +3,38 @@ package com.maxleap.shadow.impl.plugins.input;
 import com.maxleap.shadow.ShadowCodec;
 import com.maxleap.shadow.ShadowInput;
 import com.maxleap.shadow.ShadowOutput;
+import com.maxleap.shadow.impl.FnInvoker;
 
 import java.util.Optional;
 
 /**
  * Created by stream.
  */
-public abstract class ShadowInputAbs<DE_IN, DE_OUT, EN_IN, EN_OUT> implements ShadowInput {
+public abstract class ShadowInputAbs<IN, OUT, T> implements ShadowInput, FnInvoker {
 
-  protected ShadowOutput<EN_OUT> shadowOutput;
-  protected Optional<ShadowCodec<DE_IN, DE_OUT>> decodec = Optional.empty();
-  protected Optional<ShadowCodec<EN_IN, EN_OUT>> encodec = Optional.empty();
+  protected ShadowOutput<T> shadowOutput;
 
-  public void setDecodec(ShadowCodec<DE_IN, DE_OUT> decodec) {
+  protected Optional<ShadowCodec<IN, OUT>> decodec = Optional.empty();
+
+  public void setDecodec(ShadowCodec<IN, OUT> decodec) {
     this.decodec = Optional.ofNullable(decodec);
   }
 
-  public void setEncodec(ShadowCodec<EN_IN, EN_OUT> encodec) {
-    this.encodec = Optional.ofNullable(encodec);
-  }
-
-  public void setOutputPlugin(ShadowOutput<EN_OUT> shadowOutput) {
+  public void setOutputPlugin(ShadowOutput<T> shadowOutput) {
     this.shadowOutput = shadowOutput;
   }
 
   /**
    * if decodec doesn't exist, we will use content directly.
    * @param content default content
-   * @return Object
+   * @return DE_OUT
    */
-  protected Object defaultContent(DE_IN content) {
+  @SuppressWarnings("unchecked")
+  protected OUT defaultContent(IN content) {
     if (decodec.isPresent()) {
       return decodec.get().translate(content);
     } else {
-      return content;
+      return (OUT) content;
     }
   }
 }

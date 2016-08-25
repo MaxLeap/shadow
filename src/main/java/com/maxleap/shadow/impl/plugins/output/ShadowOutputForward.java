@@ -5,13 +5,14 @@ import com.maxleap.shadow.ShadowOutput;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.JsonObject;
 
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by stream.
  */
-public class ShadowOutputForward<DE_IN, DE_OUT> extends ShadowOutputAbs<DE_IN, DE_OUT> implements ShadowOutput<DE_IN> {
+public class ShadowOutputForward<IN> extends ShadowOutputAbs<IN, JsonObject> implements ShadowOutput<IN> {
 
   private EventBus eb;
   private DeliveryOptions deliveryOptions;
@@ -30,7 +31,7 @@ public class ShadowOutputForward<DE_IN, DE_OUT> extends ShadowOutputAbs<DE_IN, D
   }
 
   @Override
-  public void execute(DE_IN content) {
+  public void execute(IN content) {
     eb.send(address, defaultContent(content), deliveryOptions);
   }
 

@@ -1,7 +1,9 @@
 package com.maxleap.shadow.impl.plugins.input.dir;
 
 import com.maxleap.shadow.ShadowCodec;
+import com.maxleap.shadow.ShadowException;
 import com.maxleap.shadow.ShadowOutput;
+import com.maxleap.shadow.impl.FnInvoker;
 import com.maxleap.shadow.impl.codec.LineFeed.LineFeedMeta;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -27,18 +29,17 @@ import java.util.stream.Stream;
 /**
  * Created by stream.
  */
-class InputDir {
+class InputDir implements FnInvoker {
 
   private Vertx vertx;
   private String startPath;
   private String pattern;
   private int bufferSize = 2 << 11;
-  private int depth = 3;
+  private int depth = 4;
   private long pauseTime = 1000L;
   private ScriptObjectMirror matchFn;
   private ShadowOutput<JsonObject> shadowOutput;
   private ShadowCodec<Buffer, List<LineFeedMeta>> decode;
-  private ShadowCodec<Map<String, Object>, JsonObject> encode;
   private Map<String, TargetFile> scannedLog = new HashMap<>();
   private Pattern filterPattern;
 
@@ -52,15 +53,15 @@ class InputDir {
     .setWrite(false)
     .setSparse(false);
 
-  InputDir(Vertx vertx, String startPath, String pattern, Object matchFn, ShadowCodec<Buffer, List<LineFeedMeta>> decode,
-           ShadowCodec<Map<String, Object>, JsonObject> encode, ShadowOutput<JsonObject> shadowOutput) {
+  InputDir(Vertx vertx, String startPath, String pattern, int depth, Object matchFn,
+           ShadowCodec<Buffer, List<LineFeedMeta>> decode, ShadowOutput<JsonObject> shadowOutput) {
     this.vertx = vertx;
     this.startPath = startPath;
     this.pattern = pattern;
     this.filterPattern = Pattern.compile(pattern);
+    this.depth = depth;
     this.matchFn = (ScriptObjectMirror) matchFn;
     this.decode = decode;
-    this.encode = encode;
     this.shadowOutput = shadowOutput;
   }
 
@@ -85,31 +86,8 @@ class InputDir {
     }
   }
 
-  Collection<TargetFile> targetFiles() {
-    return scannedLog.values();
-  }
-
-  void addTargetFiles(TargetFile targetFiles) {
-    scannedLog.put(targetFiles.getFilePath(), targetFiles);
-  }
-
   void setMatchFn(ScriptObjectMirror matchFn) {
     this.matchFn = matchFn;
-  }
-
-  CompletableFuture<Void> metaInit() {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    vertx.executeBlocking(event -> {
-      scannedLog.values().forEach(readLogFile);
-      event.complete();
-    }, false, result -> {
-      if (result.succeeded()) {
-        vertx.runOnContext(h -> future.complete(null));
-      } else {
-        vertx.runOnContext(h -> future.completeExceptionally(result.cause()));
-      }
-    });
-    return future;
   }
 
   CompletableFuture<Void> scan(boolean tail) {
@@ -182,11 +160,10 @@ class InputDir {
       try {
         for (LineFeedMeta lineFeedMeta : lineFeedMetas) {
           pos += lineFeedMeta.getSourceBufferSize();
-          Map<String, Object> fnResult = (Map<String, Object>) matchFn.call(matchFn, targetFile.getFilePath(), lineFeedMeta.getResult());
-          JsonObject encodeResult = encode.translate(fnResult);
-          shadowOutput.execute(encodeResult);
+          JsonObject fnResult = invokeFnJsonObject(matchFn, targetFile.getFilePath(), lineFeedMeta.getResult());
+          shadowOutput.execute(fnResult);
         }
-      } catch (RuntimeException ex) {
+      } catch (ShadowException ex) {
         logger.error(ex.getMessage(), ex);
       }
       targetFile.setCurrentPos(targetFile.getCurrentPos() + pos);

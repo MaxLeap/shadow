@@ -1,6 +1,5 @@
 package com.maxleap.shadow.impl.plugins.input.forward;
 
-import com.maxleap.shadow.ShadowCodec;
 import com.maxleap.shadow.ShadowConfig;
 import com.maxleap.shadow.ShadowException;
 import com.maxleap.shadow.ShadowInput;
@@ -23,13 +22,11 @@ import java.util.regex.Pattern;
 /**
  * Created by stream.
  */
-public class ShadowInputForward<DE_IN, DE_OUT, EN_IN, EN_OUT> extends ShadowInputAbs<DE_IN, DE_OUT, EN_IN, EN_OUT> implements ShadowInput {
+public class ShadowInputForward<IN> extends ShadowInputAbs<IN, JsonObject, JsonObject> implements ShadowInput {
 
   private boolean matchAll;
-  private MessageConsumer<DE_IN> messageConsumer;
+  private MessageConsumer<IN> messageConsumer;
   private Map<String, ForwardRequestHandler> allTagPatterns = new LinkedHashMap<>();
-  private ShadowCodec<DE_IN, DE_OUT> messageDecodec;
-  private ShadowCodec<EN_IN, EN_OUT> messageEncodec;
 
   private static final Logger logger = LoggerFactory.getLogger(ShadowInputForward.class);
 
@@ -39,24 +36,19 @@ public class ShadowInputForward<DE_IN, DE_OUT, EN_IN, EN_OUT> extends ShadowInpu
     String address = rootConfig.getString("address");
     matchAll = rootConfig.getBoolean("matchAll", false);
     messageConsumer = vertx.eventBus().consumer(address);
-    try {
-      messageDecodec = decodec.orElseThrow(() -> new ShadowException("decodec can not be null."));
-      messageEncodec = encodec.orElseThrow(() -> new ShadowException("encodec can not be null."));
-      JsonArray tags = rootConfig.getJsonArray("tags");
-      if (tags == null) throw new IllegalArgumentException("tags can not be null.");
-      tags.forEach(jsConfig -> {
-        ShadowConfig forwardJSConfig = new ShadowConfig((JsonObject) jsConfig, rootConfig);
-        String tag = forwardJSConfig.getString("tag");
-        ScriptObjectMirror matchFn = forwardJSConfig.getFn("match");
 
-        //get output plugin
-        ForwardRequestHandler forwardRequestHandler = new ForwardRequestHandler(matchFn);
-        allTagPatterns.put(tag, forwardRequestHandler);
-      });
-      future.complete(null);
-    } catch (ShadowException ex) {
-      future.completeExceptionally(ex);
-    }
+    JsonArray tags = rootConfig.getJsonArray("tags");
+    if (tags == null) throw new IllegalArgumentException("tags can not be null.");
+    tags.forEach(jsConfig -> {
+      ShadowConfig forwardJSConfig = new ShadowConfig((JsonObject) jsConfig, rootConfig);
+      String tag = forwardJSConfig.getString("tag");
+      ScriptObjectMirror matchFn = forwardJSConfig.getFn("match");
+
+      //get output plugin
+      ForwardRequestHandler forwardRequestHandler = new ForwardRequestHandler(matchFn);
+      allTagPatterns.put(tag, forwardRequestHandler);
+    });
+    future.complete(null);
     return future;
   }
 
@@ -108,13 +100,12 @@ public class ShadowInputForward<DE_IN, DE_OUT, EN_IN, EN_OUT> extends ShadowInpu
       this.matchFn = matchFn;
     }
 
-    void handle(Message<DE_IN> message, String tag) {
+    void handle(Message<IN> message, String tag) {
       try {
-        DE_OUT deResult = messageDecodec.translate(message.body());
-        EN_IN fnResult = (EN_IN) matchFn.call(matchFn, tag, deResult);
-        EN_OUT enResult = messageEncodec.translate(fnResult);
-        shadowOutput.execute(enResult);
-      } catch (Exception e) {
+        JsonObject deResult = defaultContent(message.body());
+        JsonObject fnResult = invokeFnJsonObject(matchFn, tag, deResult);
+        shadowOutput.execute(fnResult);
+      } catch (ShadowException e) {
         logger.error(e.getMessage(), e);
       }
     }

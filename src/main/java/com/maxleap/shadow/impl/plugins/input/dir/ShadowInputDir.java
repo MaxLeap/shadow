@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * Created by stream.
  */
 
-public class ShadowInputDir extends ShadowInputAbs<Buffer, List<LineFeedMeta>, Map<String, Object>, JsonObject> implements ShadowInput {
+public class ShadowInputDir extends ShadowInputAbs<Buffer, List<LineFeedMeta>, JsonObject> implements ShadowInput {
 
   private static final Logger logger = LoggerFactory.getLogger(ShadowInputDir.class);
   private final Map<String, InputDir> targetDirs = new HashMap<>();
@@ -41,10 +41,10 @@ public class ShadowInputDir extends ShadowInputAbs<Buffer, List<LineFeedMeta>, M
       ScriptObjectMirror matchFn = dirJSConfig.getFn("match");
       String startPath = dirJSConfig.getString("startPath");
       String pattern = dirJSConfig.getString("pattern");
+      int depth = dirJSConfig.getInteger("depth", 4);
       try {
-        InputDir inputDir = new InputDir(vertx, startPath, pattern, matchFn,
+        InputDir inputDir = new InputDir(vertx, startPath, pattern, depth, matchFn,
           decodec.orElseThrow(() -> new ShadowException("decodec can not be null.")),
-          encodec.orElseThrow(() -> new ShadowException("encodec can not be null.")),
           shadowOutput);
         targetDirs.put(startPath + pattern, inputDir);
       } catch (ShadowException ex) {

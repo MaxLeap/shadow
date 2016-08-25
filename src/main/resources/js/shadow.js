@@ -13,7 +13,6 @@ var shadowInput = {
     pluginClass:"com.maxleap.shadow.impl.plugins.input.dir.ShadowInputDir",
     output : "stdout",
     decodec : "com.maxleap.shadow.impl.codec.LineFeed",
-    encodec : "com.maxleap.shadow.impl.codec.MapToJson",
 
     config : {
       paths : [{

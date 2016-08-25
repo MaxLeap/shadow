@@ -5,6 +5,7 @@ import com.maxleap.shadow.ShadowCodec;
 import com.maxleap.shadow.ShadowConfig;
 import com.maxleap.shadow.ShadowException;
 import com.maxleap.shadow.ShadowInput;
+import com.maxleap.shadow.impl.FnInvoker;
 import com.maxleap.shadow.impl.plugins.input.ShadowInputAbs;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -25,12 +26,11 @@ import java.util.regex.Pattern;
 /**
  * Created by stream.
  */
-public class ShadowInputHttp<DE_OUT, EN_IN, EN_OUT> extends ShadowInputAbs<String, DE_OUT, EN_IN, EN_OUT> implements ShadowInput {
+public class ShadowInputHttp extends ShadowInputAbs<Buffer, JsonObject, JsonObject> implements ShadowInput {
   private HttpServer httpServer;
   private boolean matchAll;
   private Map<String, HttpRequestHandler> allPaths = new LinkedHashMap<>();
-  private ShadowCodec<String, DE_OUT> messageDecodec;
-  private ShadowCodec<EN_IN, EN_OUT> messageEncodec;
+  private ShadowCodec<Buffer, JsonObject> messageDecodec;
 
   private static final Logger logger = LoggerFactory.getLogger(ShadowInputHttp.class);
 
@@ -44,7 +44,6 @@ public class ShadowInputHttp<DE_OUT, EN_IN, EN_OUT> extends ShadowInputAbs<Strin
 
     try {
       messageDecodec = decodec.orElseThrow(() -> new ShadowException("decodec can not be null."));
-      messageEncodec = encodec.orElseThrow(() -> new ShadowException("encodec can not be null."));
       future.complete(null);
     } catch (ShadowException ex) {
       future.completeExceptionally(ex);
@@ -127,7 +126,7 @@ public class ShadowInputHttp<DE_OUT, EN_IN, EN_OUT> extends ShadowInputAbs<Strin
     return future;
   }
 
-  private class HttpRequestHandler {
+  private class HttpRequestHandler implements FnInvoker {
     private ScriptObjectMirror matchFn;
 
     HttpRequestHandler(ScriptObjectMirror matchFn) {
@@ -137,10 +136,9 @@ public class ShadowInputHttp<DE_OUT, EN_IN, EN_OUT> extends ShadowInputAbs<Strin
     @SuppressWarnings("unchecked")
     void handle(String requestPath, Buffer requestBuffer, HttpServerResponse response) {
       try {
-        DE_OUT deResult = messageDecodec.translate(requestBuffer.toString());
-        EN_IN fnResult = (EN_IN) matchFn.call(matchFn, requestPath, deResult);
-        EN_OUT enResult = messageEncodec.translate(fnResult);
-        shadowOutput.execute(enResult);
+        JsonObject deResult = messageDecodec.translate(requestBuffer);
+        JsonObject fnResult = invokeFnJsonObject(matchFn, requestPath, deResult);
+        shadowOutput.execute(fnResult);
       } catch (Exception e) {
         response.setStatusMessage(e.getMessage());
         response.setStatusCode(500);

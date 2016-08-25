@@ -1,7 +1,6 @@
 package com.maxleap.shadow.impl.plugins.input.dir;
 
 import io.vertx.core.file.AsyncFile;
-import io.vertx.core.json.JsonObject;
 
 /**
  * Created by stream.
@@ -20,14 +19,6 @@ class TargetFile implements Comparable<TargetFile> {
     this.totalSize = totalSize;
     this.lastModifiedTime = lastModifiedTime;
     this.currentPos = currentPos;
-  }
-
-  TargetFile(JsonObject jsonObject) {
-    this.inputDir = jsonObject.getString("inputDir");
-    this.filePath = jsonObject.getString("filePath");
-    this.totalSize = jsonObject.getLong("totalSize");
-    this.lastModifiedTime = jsonObject.getLong("lastModifiedTime");
-    this.currentPos = jsonObject.getLong("currentPos");
   }
 
   String getInputDir() {
@@ -68,15 +59,6 @@ class TargetFile implements Comparable<TargetFile> {
 
   void setAsyncFile(AsyncFile asyncFile) {
     this.asyncFile = asyncFile;
-  }
-
-  JsonObject toJson() {
-    return new JsonObject()
-      .put("inputDir", inputDir)
-      .put("filePath", filePath)
-      .put("totalSize", totalSize)
-      .put("lastModifiedTime", lastModifiedTime)
-      .put("currentPos", currentPos);
   }
 
   @Override

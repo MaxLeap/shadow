@@ -161,15 +161,6 @@ public class NashornParserEngine implements ParserEngine {
         }
       }
 
-      String encodecClassPath = (String) inputPluginJS.get("encodec");
-      if (encodecClassPath != null) {
-        try {
-          shadowInputPlugin.setEncodec(loadCodec(encodecClassPath));
-        } catch (ShadowException e) {
-          future.completeExceptionally(e);
-        }
-      }
-
       Map<String, Object> config = (Map<String, Object>) inputPluginJS.get("config");
       future = shadowInputPlugin.init(vertx, new ShadowConfig(config)).thenAccept(aVoid -> {
         inputPlugins.put(inputPluginName, shadowInputPlugin);
