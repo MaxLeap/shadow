@@ -57,6 +57,28 @@ var shadowInput = {
     }
   },
 
+  myDir : {
+    pluginClass:"com.maxleap.shadow.impl.plugins.input.dir.ShadowInputDir",
+    shadowOutputName : "stdout",
+    decodec : "com.maxleap.shadow.impl.codec.LineFeed",
+    config : {
+      tail:true,
+      paths : [
+        {
+          startPath:"./",
+          pattern:".*myDir.log",
+          match:function(fileFullPath, logContent) {
+            //return a javascript object
+            return {
+              path:fileFullPath,
+              log:logContent
+            };
+          }
+        }
+      ]
+    }
+  },
+
   //startup a http server for receive logs
   http : {
     pluginClass:"com.maxleap.shadow.impl.plugins.input.http.ShadowInputHttp",

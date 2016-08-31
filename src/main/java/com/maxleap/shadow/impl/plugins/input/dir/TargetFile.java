@@ -30,6 +30,7 @@ class TargetFile implements Comparable<TargetFile> {
   }
 
   long getTotalSize() {
+    //totalSize,会变,比如执行了rotate,所以要想办法读取最新的totalSize
     return totalSize;
   }
 

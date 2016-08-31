@@ -36,7 +36,7 @@ class InputDir implements FnInvoker {
   private String pattern;
   private int bufferSize = 2 << 11;
   private int depth = 4;
-  private long pauseTime = 1000L;
+  private long pauseTime = 500L;
   private ScriptObjectMirror matchFn;
   private ShadowOutput<JsonObject> shadowOutput;
   private ShadowCodec<Buffer, List<LineFeedMeta>> decode;
@@ -100,13 +100,13 @@ class InputDir implements FnInvoker {
 
         //redundant files
         oldLogFiles.stream()
-          .filter(targetFile -> !mutual.contains(targetFile)).collect(Collectors.toSet())
+          .filter(targetFile -> !mutual.contains(targetFile)) //如果不存在交集里,则说明打开的文件应该删除掉
           .forEach(targetFile -> {
             scannedLog.remove(targetFile.getFilePath());
             //close file
             targetFile.getAsyncFile().close(closeEvent -> {
               if (closeEvent.failed())
-                logger.error(closeEvent.cause().getMessage(), closeEvent.cause());
+                logger.error("close file failed. " + targetFile.getFilePath(), closeEvent.cause());
             });
           });
 
@@ -173,9 +173,14 @@ class InputDir implements FnInvoker {
         int nextReadLength = remainderLength > bufferSize ? bufferSize : (int) remainderLength;
         readLog(targetFile, asyncFile, resetBuff, nextReadLength);
       } else {
-        scannedLog.put(targetFile.getFilePath(), targetFile);
         vertx.setTimer(pauseTime, event -> vertx.fileSystem().exists(targetFile.getFilePath(), existEvent -> {
           if (existEvent.succeeded() && existEvent.result()) {
+            //如果currentPos > total size,说明文件内容被清空了,这时需要想办法,重新定位索引
+            FileProps fileProps = vertx.fileSystem().propsBlocking(targetFile.getFilePath());
+            if (fileProps.size() < targetFile.getTotalSize()) {
+              targetFile.setCurrentPos(0);
+              targetFile.setTotalSize(fileProps.size());
+            }
             readLog(targetFile, asyncFile, Buffer.buffer(0), readLength(targetFile));
           }
         }));

@@ -85,7 +85,7 @@ public class ShadowInputDir extends ShadowInputAbs<Buffer, List<LineFeedMeta>, J
         finalFuture.complete(null);
         //watch folders by timer
         folderWatcher.handler(aLong -> targetDirs.values().forEach(inputDir ->
-          inputDir.scan(false).whenComplete((bVoid, ex) -> {
+          inputDir.scan(tail).whenComplete((bVoid, ex) -> {
             if (ex != null) {
               logger.error(ex.getMessage(), ex);
             }
