@@ -6,6 +6,8 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.spi.cluster.zookeeper.ZookeeperClusterManager;
 import sun.misc.Signal;
 
 /**
@@ -16,8 +18,30 @@ public class ShadowMain {
   private static final Logger logger = LoggerFactory.getLogger(ShadowMain.class);
 
   public static void main(String[] args) {
-    VertxOptions vertxOptions = new VertxOptions();
-    Vertx vertx = Vertx.vertx(vertxOptions);
+    Vertx vertx = Vertx.vertx();
+
+    if (vertx.fileSystem().existsBlocking("conf/zookeeper.json")) {
+      JsonObject zkConfig = vertx.fileSystem().readFileBlocking("conf/zookeeper.json").toJsonObject();
+      ClusterManager zkClusterManager = new ZookeeperClusterManager(zkConfig);
+
+      VertxOptions vertxOptions = new VertxOptions();
+      vertxOptions.setClustered(true);
+      vertxOptions.setClusterManager(zkClusterManager);
+
+      Vertx.clusteredVertx(vertxOptions, event -> {
+        if (event.succeeded()) {
+          Vertx clusterVertx = event.result();
+          startUpShadow(clusterVertx);
+        } else {
+          logger.error("start cluster shadow failed.", event.cause());
+        }
+      });
+    } else {
+      startUpShadow(vertx);
+    }
+  }
+
+  private static void startUpShadow(Vertx vertx) {
     final ParserEngine parserEngine = new NashornParserEngine(vertx);
 
     vertx.fileSystem().readFile("conf/config.json", fileEvent -> {
@@ -38,25 +62,17 @@ public class ShadowMain {
         logger.error("can not found config.json", fileEvent.cause());
       }
     });
-
-//    vertx.setPeriodic(1000, event -> {
-//      Buffer buffer = vertx.fileSystem().readFileBlocking("/Users/stream/codes/java/leap/my.log");
-//      buffer.appendString(Instant.now().getEpochSecond() + "\n");
-//      vertx.fileSystem().writeFileBlocking("/Users/stream/codes/java/leap/my.log", buffer);
-//    });
   }
 
   private static void listenSignal(ParserEngine parserEngine) {
-    Signal.handle(new Signal("USR2"), signal -> {
-      parserEngine.reloadPluginFn()
-        .whenComplete((aVoid, throwable) -> {
-          if (throwable != null) {
-            logger.error("reload failed.", throwable);
-          } else {
-            logger.info("reload success.....");
-          }
-        });
-    });
+    Signal.handle(new Signal("USR2"), signal -> parserEngine.reloadPluginFn()
+      .whenComplete((aVoid, throwable) -> {
+        if (throwable != null) {
+          logger.error("reload failed.", throwable);
+        } else {
+          logger.info("reload success.....");
+        }
+      }));
   }
 
 }
