@@ -54,7 +54,7 @@ public class ShadowMain {
             if (throwable != null) {
               logger.error("shadow startup failed.", throwable);
             } else {
-              logger.info("start shadow success.....");
+              logger.info("start shadow success for debug file collection.....");
               listenSignal(parserEngine);
             }
           });

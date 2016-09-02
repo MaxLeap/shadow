@@ -66,7 +66,7 @@ var shadowInput = {
       paths : [
         {
           startPath:"./",
-          pattern:".*myDir.log",
+          pattern:".*shadow-json.log",
           match:function(fileFullPath, logContent) {
             //return a javascript object
             return {

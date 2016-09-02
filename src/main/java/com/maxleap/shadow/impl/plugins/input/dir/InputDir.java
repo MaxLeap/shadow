@@ -19,7 +19,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -141,9 +145,11 @@ class InputDir implements FnInvoker {
     if (fileProps == null) {
       fileProps = vertx.fileSystem().propsBlocking(filePath);
     }
+    String inode = getFileInode(filePath);
     TargetFile targetFile = scannedLog.getOrDefault(filePath,
       new TargetFile(startPath + pattern, filePath, fileProps.size(), fileProps.lastModifiedTime(), tail ? fileProps.size() : 0));
     targetFile.setTotalSize(fileProps.size());
+    targetFile.setInode(inode);
     targetFile.setLastModifiedTime(fileProps.lastModifiedTime());
     return targetFile;
   }
@@ -175,17 +181,41 @@ class InputDir implements FnInvoker {
       } else {
         vertx.setTimer(pauseTime, event -> vertx.fileSystem().exists(targetFile.getFilePath(), existEvent -> {
           if (existEvent.succeeded() && existEvent.result()) {
-            //如果currentPos > total size,说明文件内容被清空了,这时需要想办法,重新定位索引
             FileProps fileProps = vertx.fileSystem().propsBlocking(targetFile.getFilePath());
-            if (fileProps.size() < targetFile.getTotalSize()) {
-              targetFile.setCurrentPos(0);
-              targetFile.setTotalSize(fileProps.size());
+            //如果currentPos > total size,说明文件内容被清空了
+            if (fileProps.size() < targetFile.getTotalSize() && !targetFile.getInode().equals(getFileInode(targetFile.getFilePath()))) {
+              //这里再次判断文件的inode是否发生变化,如果变化,重新打开文件
+              targetFile.getAsyncFile().close();
+              TargetFile newTargetFile = getLogFile(targetFile.getFilePath(), fileProps, true);
+              newTargetFile.setCurrentPos(0);
+              readLogFile.accept(newTargetFile);
+            } else {
+              readLog(targetFile, asyncFile, Buffer.buffer(0), readLength(targetFile));
             }
-            readLog(targetFile, asyncFile, Buffer.buffer(0), readLength(targetFile));
+          } else {
+            logger.warn("file have delete, so shadow will close this file.");
+            targetFile.getAsyncFile().close();
           }
         }));
       }
     });
+  }
+
+  /**
+   * get inode
+   *
+   * @param filePath file path
+   */
+  private String getFileInode(String filePath) {
+    try {
+      BasicFileAttributes bfa = Files.readAttributes(Paths.get(filePath), BasicFileAttributes.class);
+      String str = bfa.fileKey().toString();
+      String[] devAndInode = str.split("=");
+      return devAndInode[2].substring(0, devAndInode[2].length() - 1);
+    } catch (IOException e) {
+      logger.error("get file information failed.", e);
+    }
+    return null;
   }
 
 }

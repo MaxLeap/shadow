@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <RollingFile name="RollingJsonFile" fileName="shadow-json.log"
+                 filePattern="shadow-json.%i">
+      <MaxLeapJsonLayout/>
+      <DefaultRolloverStrategy max="3"/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="5 KB"/>
+      </Policies>
+    </RollingFile>
+
+    <Console name="Console">
+      <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+    </Console>
+  </Appenders>
+
+  <Loggers>
+    <Root level="INFO">
+      <AppenderRef ref="RollingJsonFile"/>
+    </Root>
+  </Loggers>
+</Configuration>

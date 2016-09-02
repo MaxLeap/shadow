@@ -1,17 +1,22 @@
 package com.maxleap.shadow.impl.plugins.input.dir;
 
 import io.vertx.core.file.AsyncFile;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 /**
  * Created by stream.
  */
 class TargetFile implements Comparable<TargetFile> {
   private String filePath;
+  private String inode;
   private long totalSize;
   private long lastModifiedTime;
   private long currentPos;
   private AsyncFile asyncFile;
   private String inputDir;
+
+  private static final Logger logger = LoggerFactory.getLogger(TargetFile.class);
 
   TargetFile(String inputDir, String filePath, long totalSize, long lastModifiedTime, long currentPos) {
     this.inputDir = inputDir;
@@ -32,6 +37,14 @@ class TargetFile implements Comparable<TargetFile> {
   long getTotalSize() {
     //totalSize,会变,比如执行了rotate,所以要想办法读取最新的totalSize
     return totalSize;
+  }
+
+  public String getInode() {
+    return inode;
+  }
+
+  public void setInode(String inode) {
+    this.inode = inode;
   }
 
   void setTotalSize(long totalSize) {
@@ -82,6 +95,8 @@ class TargetFile implements Comparable<TargetFile> {
   public int hashCode() {
     return filePath.hashCode();
   }
+
+
 
   @Override
   public String toString() {
