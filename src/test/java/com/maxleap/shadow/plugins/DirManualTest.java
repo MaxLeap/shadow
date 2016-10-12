@@ -14,12 +14,12 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.IllformedLocaleException;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -67,13 +67,25 @@ public class DirManualTest {
     });
   }
 
+  @Test
+  public void reflect() {
+    Object o = null;
+    System.out.println(o);
+  }
+
   @Ignore
   @Test
-  public void readInodeInfo(TestContext context) throws IOException {
+  public void readInodeInfo(TestContext context)  {
     Async async = context.async();
     String file = resourceDir + "/js/" + "shadow.js";
     Path path = Paths.get(file);
-    BasicFileAttributes bfa = Files.readAttributes(path, BasicFileAttributes.class);
+    BasicFileAttributes bfa = null;
+    try {
+      bfa = Files.readAttributes(path, BasicFileAttributes.class);
+      throw new IllformedLocaleException("aaa");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     String str = bfa.fileKey().toString();
     String[] devAndInode = str.split("=");
     System.out.println(str);

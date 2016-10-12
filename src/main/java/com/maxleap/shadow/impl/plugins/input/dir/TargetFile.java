@@ -1,8 +1,6 @@
 package com.maxleap.shadow.impl.plugins.input.dir;
 
 import io.vertx.core.file.AsyncFile;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 /**
  * Created by stream.
@@ -15,8 +13,6 @@ class TargetFile implements Comparable<TargetFile> {
   private long currentPos;
   private AsyncFile asyncFile;
   private String inputDir;
-
-  private static final Logger logger = LoggerFactory.getLogger(TargetFile.class);
 
   TargetFile(String inputDir, String filePath, long totalSize, long lastModifiedTime, long currentPos) {
     this.inputDir = inputDir;

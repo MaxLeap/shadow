@@ -12,7 +12,7 @@
     <log4j2.version>2.5</log4j2.version>
     <slf4j.version>1.7.21</slf4j.version>
     <log4j2-json.version>1.1.0</log4j2-json.version>
-    <vertx-stack.version>3.3.2</vertx-stack.version>
+    <vertx-stack.version>3.3.3</vertx-stack.version>
     <junit.version>4.12</junit.version>
     <plugin.docker.version>0.4.11</plugin.docker.version>
     <plugin.maven.compile.version>3.3</plugin.maven.compile.version>
@@ -36,14 +36,14 @@
       <artifactId>vertx-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-zookeeper</artifactId>
+      <version>${vertx-stack.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>${log4j2.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-zookeeper</artifactId>
-      <version>3.3.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
@@ -96,6 +96,20 @@
           <target>1.8</target>
           <encoding>UTF-8</encoding>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.0.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>com.spotify</groupId>

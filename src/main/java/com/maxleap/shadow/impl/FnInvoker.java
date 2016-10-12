@@ -13,8 +13,10 @@ public interface FnInvoker {
 
   default JsonObject invokeFnJsonObject(ScriptObjectMirror fn, Object... args) throws ShadowException {
     try {
-      if (args[args.length - 1] instanceof JsonObject) {
-        args[args.length - 1] = ((JsonObject) args[args.length - 1]).getMap();
+      for (int i = 0; i < args.length; i++) {
+        if (args[i] instanceof JsonObject) {
+          args[i] = ((JsonObject) args[i]).getMap();
+        }
       }
       @SuppressWarnings("unchecked")
       Map<String, Object> fnResult = (Map<String, Object>) fn.call(fn, args);
@@ -26,8 +28,10 @@ public interface FnInvoker {
 
   default String invokeFnString(ScriptObjectMirror fn, Object... args) throws ShadowException {
     try {
-      if (args[args.length - 1] instanceof JsonObject) {
-        args[args.length - 1] = ((JsonObject) args[args.length - 1]).getMap();
+      for (int i = 0; i < args.length; i++) {
+        if (args[i] instanceof JsonObject) {
+          args[i] = ((JsonObject) args[i]).getMap();
+        }
       }
       @SuppressWarnings("unchecked")
       String fnResult = (String) fn.call(fn, args);

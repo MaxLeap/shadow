@@ -15,9 +15,7 @@ public class LineFeed implements ShadowCodec<Buffer, List<LineFeed.LineFeedMeta>
   @Override
   public List<LineFeedMeta> translate(Buffer data) {
     List<LineFeedMeta> lineFeedMetaList = new ArrayList<>();
-    RecordParser.newDelimited(System.lineSeparator(), result -> {
-      lineFeedMetaList.add(new LineFeedMeta(result.length() + 1, result.toString()));
-    }).handle(data);
+    RecordParser.newDelimited(System.lineSeparator(), result -> lineFeedMetaList.add(new LineFeedMeta(result.length() + 1, result.toString()))).handle(data);
     return lineFeedMetaList;
   }
 
