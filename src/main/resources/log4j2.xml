@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
   <Appenders>
-    <RollingFile name="RollingJsonFile" fileName="shadow-json.log"
-                 filePattern="shadow-json.%i">
-      <DefaultRolloverStrategy max="3"/>
+    <RollingFile name="RollingJsonFile" fileName="/opt/logs/tools/shadow/shadow-json.log"
+                 filePattern="/opt/logs/tools/shadow/shadow-json.%i">
+      <DefaultRolloverStrategy max="2"/>
       <Policies>
-        <SizeBasedTriggeringPolicy size="5 KB"/>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
       </Policies>
     </RollingFile>
 
@@ -16,6 +16,7 @@
 
   <Loggers>
     <Root level="INFO">
+      <AppenderRef ref="Console"/>
       <AppenderRef ref="RollingJsonFile"/>
     </Root>
   </Loggers>

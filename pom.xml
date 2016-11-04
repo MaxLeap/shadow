@@ -6,14 +6,15 @@
 
   <groupId>com.maxleap</groupId>
   <artifactId>shadow</artifactId>
-  <version>0.2.0</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <properties>
     <log4j2.version>2.5</log4j2.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <log4j2-json.version>1.1.0</log4j2-json.version>
     <vertx-stack.version>3.3.3</vertx-stack.version>
     <junit.version>4.12</junit.version>
+
+    <kafka.version>0.10.0.1</kafka.version>
     <plugin.docker.version>0.4.11</plugin.docker.version>
     <plugin.maven.compile.version>3.3</plugin.maven.compile.version>
   </properties>
@@ -36,11 +37,6 @@
       <artifactId>vertx-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-zookeeper</artifactId>
-      <version>${vertx-stack.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>${log4j2.version}</version>
@@ -61,15 +57,21 @@
       <version>${log4j2.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.maxleap</groupId>
-      <artifactId>log4j2-json</artifactId>
-      <version>${log4j2-json.version}</version>
-    </dependency>
-
-    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-codegen</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>${kafka.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -170,5 +172,11 @@
     </snapshotRepository>
   </distributionManagement>
 
+  <scm>
+    <url>https://github.com/MaxLeap/shadow</url>
+    <connection>scm:git:git@github.com:MaxLeap/shadow.git</connection>
+    <developerConnection>scm:git:git@github.com:MaxLeap/shadow.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
 
 </project>

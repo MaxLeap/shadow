@@ -1,0 +1,12 @@
+{
+	"httpJsonOutput" : {
+		"defaultURI" : "/",
+		"hosts" : ["127.0.0.1:8080"]
+	},
+
+	"httpJsonInput" : {
+		"host":"127.0.0.1",
+		"port":8082,
+		"uriPatterns":["/log1", "/log2"]
+	}
+}
