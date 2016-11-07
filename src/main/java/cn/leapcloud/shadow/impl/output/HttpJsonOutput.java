@@ -37,7 +37,7 @@ public class HttpJsonOutput extends AbsShadowOutput<JsonObject, String, String> 
         HttpClientOptions httpClientOptions = new HttpClientOptions()
           .setDefaultHost(hostAndPort[0])
           .setDefaultPort(Integer.valueOf(hostAndPort[1]));
-        logger.info("target host " + hostAndPort[0] + " port " + hostAndPort[1]);
+        logger.info("init http client json output host " + hostAndPort[0] + " port " + hostAndPort[1]);
         return vertx.createHttpClient(httpClientOptions);
       })
       .collect(Collectors.toList());

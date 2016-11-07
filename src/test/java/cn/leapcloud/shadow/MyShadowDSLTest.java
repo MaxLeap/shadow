@@ -1,7 +1,5 @@
 package cn.leapcloud.shadow;
 
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -9,9 +7,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by stream.
@@ -23,20 +18,30 @@ public class MyShadowDSLTest {
   public void runMyShadowDSL(TestContext context) {
     Async async = context.async();
     Vertx vertx = Vertx.vertx();
-    JsonObject config = vertx.fileSystem().readFileBlocking("shadow.json").toJsonObject();
-    AbsShadowDSL shadowDSL = new MyShadowDSL();
-    shadowDSL.start(config);
 
-    List<Future> futureList = shadowDSL.getInputs().values().stream().map(input -> input.start(vertx)).collect(Collectors.toList());
-    futureList.addAll(shadowDSL.getOutputs().values().stream().map(output -> output.start(vertx)).collect(Collectors.toList()));
+    //mock output server
+    vertx.createHttpServer().requestHandler(request ->
+      request.exceptionHandler(context::fail).bodyHandler(bodyBuffer -> {
+        JsonObject body = bodyBuffer.toJsonObject();
+        context.assertEquals("bar", body.getString("foo"));
+        request.response().end();
+      })).listen(8081, "127.0.0.1");
 
-    CompositeFuture.all(futureList).setHandler(asyncResult -> {
+    //
+    Shadow shadow = new Shadow();
+    shadow.startShadowDSL().setHandler(asyncResult -> {
       if (asyncResult.succeeded()) {
-        System.out.println("shadow start up.");
+        vertx.createHttpClient()
+          .post(8082, "127.0.0.1", "/log1")
+          .putHeader("Content-Type", "application/json")
+          .handler(response -> {
+            context.assertEquals(200, response.statusCode());
+            async.complete();
+          })
+          .end(new JsonObject().put("foo", "bar").encode());
       } else {
         context.fail(asyncResult.cause());
       }
     });
-
   }
 }

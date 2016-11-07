@@ -1,5 +1,4 @@
-package cn.leapcloud.shadow;
-
+import cn.leapcloud.shadow.AbsShadowDSL;
 import cn.leapcloud.shadow.impl.input.HttpJsonInput;
 import cn.leapcloud.shadow.impl.output.ConsoleFutureOutput;
 import cn.leapcloud.shadow.impl.output.ConsoleOutput;
@@ -15,8 +14,7 @@ import java.util.regex.Pattern;
 /**
  * Created by stream.
  */
-public class MyShadowDSL extends AbsShadowDSL {
-
+public class MyShadow extends AbsShadowDSL {
 
   @Override
   protected void start(JsonObject config) {
