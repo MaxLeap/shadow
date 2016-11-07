@@ -4,7 +4,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.verticle.CompilingClassLoader;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -53,10 +52,8 @@ public class Shadow {
 
   private Future<Void> startShadowPlugin(Vertx vertx) {
     Future<Void> future = Future.future();
-
-    //config inject.
-    JsonObject config = vertx.fileSystem().readFileBlocking("shadow.json").toJsonObject();
-    shadowDSL.start(config);
+    //dsl start
+    shadowDSL.start();
 
     //plugin start.
     List<Future> futureList = shadowDSL.getInputs().values().stream().map(input -> input.start(vertx)).collect(Collectors.toList());

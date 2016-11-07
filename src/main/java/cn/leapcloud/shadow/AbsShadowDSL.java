@@ -2,7 +2,6 @@ package cn.leapcloud.shadow;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +30,7 @@ public abstract class AbsShadowDSL implements ShadowDSL {
     return inputs;
   }
 
-  protected abstract void start(JsonObject config);
+  protected abstract void start();
 
   protected Future<Void> stop() {
     List<Future> futureList = getInputs().values().stream().map((Function<ShadowInput, Future>) ShadowInput::stop).collect(Collectors.toList());

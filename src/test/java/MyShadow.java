@@ -5,6 +5,7 @@ import cn.leapcloud.shadow.impl.output.ConsoleOutput;
 import cn.leapcloud.shadow.impl.output.HttpJsonOutput;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -17,19 +18,24 @@ import java.util.regex.Pattern;
 public class MyShadow extends AbsShadowDSL {
 
   @Override
-  protected void start(JsonObject config) {
+  protected void start() {
     //output
     addShadowOutput("console", new ConsoleOutput());
     addShadowOutput("consoleFuture", new ConsoleFutureOutput());
 
     addShadowOutput("httpJsonOutput", new HttpJsonOutput()
-      .config(config.getJsonObject("httpJsonOutput"))
+      .config(new JsonObject()
+        .put("defaultURI", "/")
+        .put("hosts", new JsonArray().add("127.0.0.1:8081")))
       .tokenFunction((data, outputConfig) ->
         Optional.ofNullable(data.getString("targetURI"))));
 
     //input
     addShadowInput("httpJsonInput", new HttpJsonInput()
-      .config(config.getJsonObject("httpJsonInput"))
+      .config(new JsonObject()
+        .put("host", "127.0.0.1")
+        .put("port", 8082)
+        .put("uriPatterns", new JsonArray().add("/log1").add("/log2")))
       .matchFunction((request, inputConfig) -> {
         if (HttpMethod.POST == request.method()) {
           @SuppressWarnings("unchecked")
