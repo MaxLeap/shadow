@@ -14,10 +14,10 @@ import java.util.function.Function;
  */
 public abstract class AbsShadowInput<IN, OUT, R> implements ShadowInput<IN, OUT, R> {
 
-  protected Function<IN, OUT> decode = (in) -> (OUT) in;
-  protected BiFunction<IN, JsonObject, Boolean> matchFunction;
-  protected BiFunction<OUT, JsonObject, R> handler = (out, config) -> (R) out;
-  protected List<Consumer<R>> outputs = new ArrayList<>();
+  private Function<IN, OUT> decode = (in) -> (OUT) in;
+  private BiFunction<IN, JsonObject, Boolean> matchFunction;
+  private BiFunction<OUT, JsonObject, R> handler = (out, config) -> (R) out;
+  private List<Consumer<R>> outputs = new ArrayList<>();
 
   protected JsonObject config;
 

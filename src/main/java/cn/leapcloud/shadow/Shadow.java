@@ -18,6 +18,15 @@ public class Shadow {
 
   private static final Logger logger = LoggerFactory.getLogger(Shadow.class);
   private AbsShadowDSL shadowDSL;
+  private Vertx vertx;
+
+  public Shadow(Vertx vertx) {
+    this.vertx = vertx;
+  }
+
+  public Shadow() {
+    this.vertx = Vertx.vertx();
+  }
 
   public static void main(String[] args) {
     Shadow shadow = new Shadow();
@@ -33,7 +42,7 @@ public class Shadow {
 
   public Future<Void> startShadowDSL() {
     Future<Void> future = Future.future();
-    Vertx vertx = Vertx.vertx();
+    vertx.exceptionHandler(throwable -> logger.error("internal exception.", throwable));
     if (vertx.fileSystem().existsBlocking("Shadow.java")) {
       CompilingClassLoader compilingLoader = new CompilingClassLoader(this.getClass().getClassLoader(), "Shadow.java");
       String className = compilingLoader.resolveMainClassName();

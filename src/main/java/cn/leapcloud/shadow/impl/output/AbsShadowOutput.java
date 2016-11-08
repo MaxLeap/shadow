@@ -13,7 +13,7 @@ import java.util.function.Function;
  */
 public abstract class AbsShadowOutput<IN, OUT, T> implements ShadowOutput<IN, OUT, T> {
 
-  protected Function<IN, OUT> encode = in -> (OUT) in;
+  protected Function<IN, OUT> encode = (in) -> (OUT) in;
   protected JsonObject config;
   protected BiFunction<IN, JsonObject, Optional<T>> tokenFunction = (in, config) -> Optional.empty();
 

@@ -17,7 +17,9 @@ import java.util.stream.Collectors;
 /**
  * Created by stream.
  */
-public class HttpJsonOutput extends AbsShadowOutput<JsonObject, String, String> implements ShadowOutput<JsonObject, String, String> {
+public class HttpJsonOutput
+  extends AbsShadowOutput<Future<JsonObject>, Future<String>, String>
+  implements ShadowOutput<Future<JsonObject>, Future<String>, String> {
 
   private List<HttpClient> httpClients = new ArrayList<>();
   private String defaultURI;
@@ -46,24 +48,28 @@ public class HttpJsonOutput extends AbsShadowOutput<JsonObject, String, String> 
   }
 
   @Override
-  public void accept(Optional<String> token, String data) {
+  public void accept(Optional<String> token, Future<String> data) {
     //Round robin
     HttpClient httpClient = httpClients.get(currentIndex >= httpClients.size() ? 0 : currentIndex);
     currentIndex++;
 
-    //get uri if exist token function or using default
-    String uri = token.orElse(defaultURI);
+    data.setHandler(dataAsync -> {
+      if (dataAsync.succeeded()) {
+        httpClient
+          .post(token.orElse(defaultURI))
+          .handler(response -> {
+            if (response.statusCode() < 200 || response.statusCode() > 399) {
+              logger.warn(String.format("send http message failed, http code %s, http message %s, URI %s",
+                response.statusCode(), response.statusMessage(), defaultURI));
+            }
+          })
+          .exceptionHandler(ex -> logger.error("http out exception.", ex))
+          .end(dataAsync.result());
+      } else {
+        logger.error("future exception.", dataAsync.cause());
+      }
+    });
 
-    httpClient
-      .post(uri)
-      .handler(response -> {
-        if (response.statusCode() < 200 || response.statusCode() > 399) {
-          logger.warn(String.format("send http message failed, http code %s, http message %s, URI %s",
-            response.statusCode(), response.statusMessage(), uri));
-        }
-      })
-      .exceptionHandler(ex -> logger.error("http out exception.", ex))
-      .end(data);
   }
 
   @Override
