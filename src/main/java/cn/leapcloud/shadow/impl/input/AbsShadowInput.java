@@ -1,7 +1,10 @@
 package cn.leapcloud.shadow.impl.input;
 
 import cn.leapcloud.shadow.ShadowInput;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +21,8 @@ public abstract class AbsShadowInput<IN, OUT, R> implements ShadowInput<IN, OUT,
   private BiFunction<IN, JsonObject, Boolean> matchFunction;
   private BiFunction<OUT, JsonObject, R> handler = (out, config) -> (R) out;
   private List<Consumer<R>> outputs = new ArrayList<>();
+
+  private static final Logger logger = LoggerFactory.getLogger(AbsShadowInput.class);
 
   protected JsonObject config;
 
@@ -46,17 +51,28 @@ public abstract class AbsShadowInput<IN, OUT, R> implements ShadowInput<IN, OUT,
   }
 
   @Override
-  public ShadowInput<IN, OUT, R> addOutput(Consumer<R> output) {
+  public ShadowInput<IN, OUT, R> addOutput(Consumer output) {
     outputs.add(output);
     return this;
   }
 
   @Override
   public void accept(IN data) {
-    outputs.forEach(output -> {
-      if (matchFunction.apply(data, config))
-        output.accept(handler.apply(decode.apply(data), config));
-    });
+    if (matchFunction.apply(data, config)) {
+      R result = handler.apply(decode.apply(data), config);
+      //The result could be Future, so we have to set a handler to get async result.
+      if (result instanceof Future) {
+        ((Future<Object>) result).setHandler(event -> {
+          if (event.succeeded()) {
+            outputs.forEach(output -> output.accept((R) event.result()));
+          } else {
+            logger.error("handle async result failed.", event.cause());
+          }
+        });
+      } else {
+        outputs.forEach(output -> output.accept(result));
+      }
+    }
   }
 
 

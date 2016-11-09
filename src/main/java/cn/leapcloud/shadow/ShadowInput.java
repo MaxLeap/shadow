@@ -49,7 +49,7 @@ public interface ShadowInput<IN, OUT, R> extends Consumer<IN> {
 
   ShadowInput<IN, OUT, R> handler(BiFunction<OUT, JsonObject, R> handler);
 
-  ShadowInput<IN, OUT, R> addOutput(Consumer<R> output);
+  ShadowInput<IN, OUT, R> addOutput(Consumer output);
 
 
 }

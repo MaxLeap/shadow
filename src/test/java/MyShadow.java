@@ -20,15 +20,15 @@ public class MyShadow extends AbsShadowDSL {
   @Override
   protected void start() {
     //output
-    ShadowOutput<Future<String>, Future<String>, String> consoleOutput = new ConsoleOutput();
+    ShadowOutput<String, String, String> consoleOutput = new ConsoleOutput();
     addShadowOutput("console", consoleOutput);
 
-    ShadowOutput<Future<JsonObject>, Future<String>, String> httpJsonOutput = new HttpJsonOutput()
+    ShadowOutput<JsonObject, String, String> httpJsonOutput = new HttpJsonOutput()
       .config(new JsonObject()
         .put("defaultURI", "/")
         .put("hosts", new JsonArray().add("127.0.0.1:8081")))
-      .tokenFunction((futureData, config) -> Optional.ofNullable(config.getString("defaultURI")))
-      .encode(futureData -> futureData.map(JsonObject::encode));
+      .tokenFunction((data, config) -> Optional.ofNullable(data.getString("defaultURI", config.getString("defaultURI"))))
+      .encode(JsonObject::encode);
     addShadowOutput("httpJsonOutput", httpJsonOutput);
 
     //input

@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
  * Created by stream.
  */
 public class HttpJsonOutput
-  extends AbsShadowOutput<Future<JsonObject>, Future<String>, String>
-  implements ShadowOutput<Future<JsonObject>, Future<String>, String> {
+  extends AbsShadowOutput<JsonObject, String, String>
+  implements ShadowOutput<JsonObject, String, String> {
 
   private List<HttpClient> httpClients = new ArrayList<>();
   private String defaultURI;
@@ -48,28 +48,22 @@ public class HttpJsonOutput
   }
 
   @Override
-  public void accept(Optional<String> token, Future<String> data) {
+  public void accept(Optional<String> token, String data) {
     //Round robin
     HttpClient httpClient = httpClients.get(currentIndex >= httpClients.size() ? 0 : currentIndex);
     currentIndex++;
 
-    data.setHandler(dataAsync -> {
-      if (dataAsync.succeeded()) {
-        httpClient
-          .post(token.orElse(defaultURI))
-          .handler(response -> {
-            if (response.statusCode() < 200 || response.statusCode() > 399) {
-              logger.warn(String.format("send http message failed, http code %s, http message %s, URI %s",
-                response.statusCode(), response.statusMessage(), defaultURI));
-            }
-          })
-          .exceptionHandler(ex -> logger.error("http out exception.", ex))
-          .end(dataAsync.result());
-      } else {
-        logger.error("future exception.", dataAsync.cause());
-      }
-    });
-
+    String uri = token.orElse(defaultURI);
+    httpClient
+      .post(uri)
+      .handler(response -> {
+        if (response.statusCode() < 200 || response.statusCode() > 399) {
+          logger.warn(String.format("send http message failed, http code %s, http message %s, URI %s",
+            response.statusCode(), response.statusMessage(), defaultURI));
+        }
+      })
+      .exceptionHandler(ex -> logger.error("http out exception.", ex))
+      .end(data);
   }
 
   @Override

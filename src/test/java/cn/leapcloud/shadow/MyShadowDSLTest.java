@@ -1,6 +1,5 @@
 package cn.leapcloud.shadow;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -50,20 +49,8 @@ public class MyShadowDSLTest {
   }
 
   @Test
-  public void testHandler(TestContext context) {
-    Async async = context.async();
-    Future<String> future = Future.future();
-    //Optional<Future<String>> opt = Optional.of(future.map(a -> "b"));
-    future.map(a -> "b");
-    future.setHandler(a -> {
-      System.out.println(a.result());
-    });
+  public void testEx() {
 
-    future.map(a -> "c").setHandler(a -> {
-      System.out.println(a.result());
-    });
-
-    future.complete("a");
   }
 
 }
