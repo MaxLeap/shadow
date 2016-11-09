@@ -21,7 +21,6 @@ public class KafkaInput<K, V, T, R>
 
   @Override
   public Future<Void> start(Vertx vertx) {
-    //TODO topics
     JsonArray topics = config.getJsonArray("topics");
     int timeout = config.getInteger("pollTimeout", 10000);
 

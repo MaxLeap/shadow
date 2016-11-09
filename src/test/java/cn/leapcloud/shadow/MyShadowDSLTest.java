@@ -10,6 +10,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 /**
  * Created by stream.
  */
@@ -50,6 +54,13 @@ public class MyShadowDSLTest {
 
   @Test
   public void testEx() {
+    String content = "2016-11-09 14:27:47:531 - INFO - com.maxleap.log4j2.LoggerTest.log4j2(LoggerTest.java:19) - main - info";
+    //DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(Instant.ofEpochMilli(event.getTimeMillis()).atZone(ZoneId.of("GMT")))
+    //DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(Instant.of)
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SS");
+    LocalDateTime dateTime = LocalDateTime.parse(content.split(" - ", 5)[0], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS"));
+    System.out.println(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime.atZone(ZoneId.of("GMT"))));
+    //System.out.println(content.split(" - ", 5)[0]);
 
   }
 

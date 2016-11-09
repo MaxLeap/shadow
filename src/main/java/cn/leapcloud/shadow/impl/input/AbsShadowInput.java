@@ -50,12 +50,14 @@ public abstract class AbsShadowInput<IN, OUT, R> implements ShadowInput<IN, OUT,
     return this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ShadowInput<IN, OUT, R> addOutput(Consumer output) {
     outputs.add(output);
     return this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void accept(IN data) {
     if (matchFunction.apply(data, config)) {

@@ -65,8 +65,8 @@ public class Shadow {
     shadowDSL.start();
 
     //plugin start.
-    List<Future> futureList = shadowDSL.getInputs().values().stream().map(input -> input.start(vertx)).collect(Collectors.toList());
-    futureList.addAll(shadowDSL.getOutputs().values().stream().map(output -> output.start(vertx)).collect(Collectors.toList()));
+    List<Future> futureList = shadowDSL.getInputs().stream().map(input -> input.start(vertx)).collect(Collectors.toList());
+    futureList.addAll(shadowDSL.getOutputs().stream().map(output -> output.start(vertx)).collect(Collectors.toList()));
     CompositeFuture.any(futureList).setHandler(asyncResult -> {
       if (asyncResult.failed()) {
         future.fail(asyncResult.cause());
@@ -78,8 +78,8 @@ public class Shadow {
   }
 
   public void shutdownShadow() {
-    List<Future> futureList = shadowDSL.getInputs().values().stream().map((Function<ShadowInput, Future>) ShadowInput::stop).collect(Collectors.toList());
-    futureList.addAll(shadowDSL.getOutputs().values().stream().map((Function<ShadowOutput, Future>) ShadowOutput::stop).collect(Collectors.toList()));
+    List<Future> futureList = shadowDSL.getInputs().stream().map((Function<ShadowInput, Future>) ShadowInput::stop).collect(Collectors.toList());
+    futureList.addAll(shadowDSL.getOutputs().stream().map((Function<ShadowOutput, Future>) ShadowOutput::stop).collect(Collectors.toList()));
     CompositeFuture.all(futureList).setHandler(asyncResult -> {
       if (asyncResult.failed()) logger.error("shutdown exception.", asyncResult.cause());
     });

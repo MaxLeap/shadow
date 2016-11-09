@@ -1,35 +1,35 @@
 package cn.leapcloud.shadow;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by stream.
  */
 public abstract class AbsShadowDSL implements ShadowDSL {
 
-  private Map<String, ShadowOutput> outputs = new HashMap<>();
-  private Map<String, ShadowInput> inputs = new HashMap<>();
+  private Set<ShadowOutput> outputs = new HashSet<>();
+  private Set<ShadowInput> inputs = new HashSet<>();
 
-  Map<String, ShadowOutput> getOutputs() {
+  Set<ShadowOutput> getOutputs() {
     return outputs;
   }
 
-  Map<String, ShadowInput> getInputs() {
+  Set<ShadowInput> getInputs() {
     return inputs;
   }
 
   protected abstract void start();
 
   @Override
-  public <IN, OUT, R> ShadowDSL addShadowInput(String name, ShadowInput<IN, OUT, R> input) {
-    inputs.put(name, input);
+  public <IN, OUT, R> ShadowDSL addShadowInput(ShadowInput<IN, OUT, R> input) {
+    inputs.add(input);
     return this;
   }
 
   @Override
-  public <IN, OUT, T> ShadowDSL addShadowOutput(String name, ShadowOutput<IN, OUT, T> output) {
-    outputs.put(name, output);
+  public <IN, OUT, T> ShadowDSL addShadowOutput(ShadowOutput<IN, OUT, T> output) {
+    outputs.add(output);
     return this;
   }
 }

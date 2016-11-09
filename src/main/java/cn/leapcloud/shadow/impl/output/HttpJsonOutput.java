@@ -43,7 +43,6 @@ public class HttpJsonOutput
         return vertx.createHttpClient(httpClientOptions);
       })
       .collect(Collectors.toList());
-
     return Future.succeededFuture();
   }
 
