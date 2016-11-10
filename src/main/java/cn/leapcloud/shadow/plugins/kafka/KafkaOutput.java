@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
  * Created by stream.
  */
 public class KafkaOutput<K, V, IN>
-  extends AbsShadowOutput<IN, KafkaMessage<K, V>, String>
-  implements ShadowOutput<IN, KafkaMessage<K, V>, String> {
+  extends AbsShadowOutput<IN, KafkaMessage<K, V>, KafkaMessage<K, V>, String>
+  implements ShadowOutput<IN, KafkaMessage<K, V>, KafkaMessage<K, V>, String> {
 
   private KafkaProducer<K, V> producer;
   private String defaultTopic;
@@ -40,12 +40,17 @@ public class KafkaOutput<K, V, IN>
   @Override
   public void accept(Optional<String> topicOption, KafkaMessage<K, V> result) {
     String topic = topicOption.orElse(defaultTopic);
-    ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, result.key(), result.value());
-    producer.send(producerRecord, (metadata, exception) -> {
-      if (exception != null) {
-        logger.error(exception.getMessage(), exception);
-      }
+    vertx.executeBlocking(event -> {
+      ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, result.key(), result.value());
+      producer.send(producerRecord, (metadata, exception) -> {
+        if (exception != null) {
+          logger.error(exception.getMessage(), exception);
+        }
+      });
+    }, false, event -> {
+      if (event.failed()) logger.error("send kafka message failed.", event.cause());
     });
+
   }
 
   @Override

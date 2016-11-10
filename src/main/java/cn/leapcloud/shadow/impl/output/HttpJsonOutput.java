@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
  * Created by stream.
  */
 public class HttpJsonOutput
-  extends AbsShadowOutput<JsonObject, String, String>
-  implements ShadowOutput<JsonObject, String, String> {
+  extends AbsShadowOutput<JsonObject, JsonObject, String, String>
+  implements ShadowOutput<JsonObject, JsonObject, String, String> {
 
   private List<HttpClient> httpClients = new ArrayList<>();
   private String defaultURI;

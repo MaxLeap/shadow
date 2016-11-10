@@ -11,34 +11,42 @@ import java.util.function.Function;
 /**
  * Created by stream.
  */
-public abstract class AbsShadowOutput<IN, OUT, T> implements ShadowOutput<IN, OUT, T> {
+public abstract class AbsShadowOutput<IN, OUT, R, T> implements ShadowOutput<IN, OUT, R, T> {
 
-  protected Function<IN, OUT> encode = (in) -> (OUT) in;
   protected JsonObject config;
-  protected BiFunction<IN, JsonObject, Optional<T>> tokenFunction = (in, config) -> Optional.empty();
+  private BiFunction<IN, JsonObject, Optional<T>> tokenFunction = (in, config) -> Optional.empty();
+  private BiFunction<IN, JsonObject, OUT> handler = (in, config) -> (OUT) in;
+  private Function<OUT, R> encode = (in) -> (R) in;
 
   @Override
-  public ShadowOutput<IN, OUT, T> encode(Function<IN, OUT> encode) {
+  public ShadowOutput<IN, OUT, R, T> encode(Function<OUT, R> encode) {
     this.encode = encode;
     return this;
   }
 
   @Override
-  public ShadowOutput<IN, OUT, T> config(JsonObject config) {
+  public ShadowOutput<IN, OUT, R, T> config(JsonObject config) {
     this.config = config;
     return this;
   }
 
   @Override
-  public ShadowOutput<IN, OUT, T> tokenFunction(BiFunction<IN, JsonObject, Optional<T>> function) {
+  public ShadowOutput<IN, OUT, R, T> tokenFunction(BiFunction<IN, JsonObject, Optional<T>> function) {
     this.tokenFunction = function;
+    return this;
+  }
+
+  @Override
+  public ShadowOutput<IN, OUT, R, T> handler(BiFunction<IN, JsonObject, OUT> handler) {
+    this.handler = handler;
     return this;
   }
 
   @Override
   public void accept(IN in) {
     Optional<T> token = tokenFunction.apply(in, config);
-    OUT out = encode.apply(in);
-    accept(token, out);
+    OUT out = handler.apply(in, config);
+    R result = encode.apply(out);
+    accept(token, result);
   }
 }

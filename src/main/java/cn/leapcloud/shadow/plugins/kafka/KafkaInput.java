@@ -5,6 +5,8 @@ import cn.leapcloud.shadow.impl.input.AbsShadowInput;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -16,8 +18,9 @@ public class KafkaInput<K, V, T, R>
   extends AbsShadowInput<ConsumerRecord<K, V>, T, R>
   implements ShadowInput<ConsumerRecord<K, V>, T, R> {
 
-  private boolean isRunning;
+  private boolean isRunning = true;
   private KafkaConsumer<K, V> consumer;
+  private static final Logger logger = LoggerFactory.getLogger(KafkaInput.class);
 
   @Override
   public Future<Void> start(Vertx vertx) {
@@ -29,10 +32,12 @@ public class KafkaInput<K, V, T, R>
     consumer.subscribe(topics.getList());
     new Thread(() -> {
       while (isRunning) {
+        System.out.println("try to get kafka message.");
         ConsumerRecords<K, V> records = consumer.poll(timeout);
         records.forEach(this::accept);
       }
     }, "KafkaConsumerThread").start();
+    logger.info("Start kafka consumer, on broker " + config.getJsonObject("props").getString("bootstrap.servers"));
     return Future.succeededFuture();
   }
 

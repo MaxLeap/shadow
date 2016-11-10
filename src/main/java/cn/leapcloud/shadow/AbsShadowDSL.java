@@ -28,7 +28,7 @@ public abstract class AbsShadowDSL implements ShadowDSL {
   }
 
   @Override
-  public <IN, OUT, T> ShadowDSL addShadowOutput(ShadowOutput<IN, OUT, T> output) {
+  public <IN, OUT, R, T> ShadowDSL addShadowOutput(ShadowOutput<IN, OUT, R, T> output) {
     outputs.add(output);
     return this;
   }

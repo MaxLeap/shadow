@@ -13,7 +13,7 @@ import java.util.function.Function;
 /**
  * Created by stream.
  */
-public interface ShadowOutput<IN, OUT, T> extends Consumer<IN>, BiConsumer<Optional<T>, OUT> {
+public interface ShadowOutput<IN, OUT, R, T> extends Consumer<IN>, BiConsumer<Optional<T>, R> {
 
   Future<Void> start(Vertx vertx);
 
@@ -21,17 +21,11 @@ public interface ShadowOutput<IN, OUT, T> extends Consumer<IN>, BiConsumer<Optio
 
   /**
    * add config content to input
+   *
    * @param config JsonObject format
    * @return this
    */
-  ShadowOutput<IN, OUT, T> config(JsonObject config);
-
-  /**
-   * add encode function
-   * @param encode
-   * @return
-   */
-  ShadowOutput<IN, OUT, T> encode(Function<IN, OUT> encode);
+  ShadowOutput<IN, OUT, R, T> config(JsonObject config);
 
   /**
    * Extract token from message and config
@@ -40,8 +34,23 @@ public interface ShadowOutput<IN, OUT, T> extends Consumer<IN>, BiConsumer<Optio
    *                 JsonObject is config
    * @return this
    */
-  ShadowOutput<IN, OUT, T> tokenFunction(BiFunction<IN, JsonObject, Optional<T>> function);
+  ShadowOutput<IN, OUT, R, T> tokenFunction(BiFunction<IN, JsonObject, Optional<T>> function);
 
+  /**
+   * handler message which from input
+   *
+   * @param handler handler
+   * @return this
+   */
+  ShadowOutput<IN, OUT, R, T> handler(BiFunction<IN, JsonObject, OUT> handler);
+
+  /**
+   * add encode function, the source from handler function.
+   *
+   * @param encode encode
+   * @return this
+   */
+  ShadowOutput<IN, OUT, R, T> encode(Function<OUT, R> encode);
 
 
 }

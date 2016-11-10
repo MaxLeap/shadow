@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Created by stream.
  */
-public class ConsoleOutput extends AbsShadowOutput<String, String, String> implements ShadowOutput<String, String, String> {
+public class ConsoleOutput extends AbsShadowOutput<Object, String, String, String> implements ShadowOutput<Object, String, String, String> {
 
   @Override
   public Future<Void> start(Vertx vertx) {

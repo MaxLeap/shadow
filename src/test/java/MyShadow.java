@@ -24,10 +24,11 @@ public class MyShadow extends AbsShadowDSL {
   @Override
   protected void start() {
     //output
-    ShadowOutput<String, String, String> consoleOutput = new ConsoleOutput();
+    ShadowOutput<Object, String, String, String> consoleOutput = new ConsoleOutput()
+      .handler((data, config) -> data.toString());
     addShadowOutput(consoleOutput);
 
-    ShadowOutput<JsonObject, String, String> httpJsonOutput = new HttpJsonOutput()
+    ShadowOutput<JsonObject, JsonObject, String, String> httpJsonOutput = new HttpJsonOutput()
       .config(new JsonObject()
         .put("defaultURI", "/")
         .put("hosts", new JsonArray().add("127.0.0.1:8081")))
@@ -36,11 +37,16 @@ public class MyShadow extends AbsShadowDSL {
     addShadowOutput(httpJsonOutput);
 
     //es output
-    ShadowOutput<JsonObject, String, String> esOutput = new HttpJsonOutput()
+    ShadowOutput<JsonObject, JsonObject, String, String> esOutput = new HttpJsonOutput()
       .config(new JsonObject()
         .put("defaultURI", "/default/logs")
-        .put("hosts", new JsonArray().add("10.10.10.149:9200")))
+        .put("hosts", new JsonArray().add("0.0.0.0:9200")))
       .tokenFunction((data, config) -> Optional.ofNullable(data.getString("URI", config.getString("defaultURI"))))
+      .handler((data, config) -> {
+        //delete redundancy field.
+        data.remove("URI");
+        return data;
+      })
       .encode(JsonObject::encode);
     addShadowOutput(esOutput);
 
@@ -73,7 +79,7 @@ public class MyShadow extends AbsShadowDSL {
     addShadowInput(new KafkaInput<Integer, String, JsonObject, JsonObject>()
       .config(new JsonObject()
         .put("props", new JsonObject()
-          .put("bootstrap.servers", "0.0.0.0:9200")
+          .put("bootstrap.servers", "0.0.0.0:9092")
           .put("group.id", "kafkaConsumer")
           .put("enable.auto.commit", true)
           .put("auto.commit.interval.ms", 5000)
@@ -106,9 +112,11 @@ public class MyShadow extends AbsShadowDSL {
         //每个索引需要带上日期，也就是说一天一片 example: /tools/shadow-2016.08.19/[4]
         String esDate = dateTimeStr.split(" ")[0].replace("-", ".");
         logContent.put("URI", "/" + pathArray[3] + "-" + pathArray[4] + "-" + esDate);
+        //for log stash report
+        logContent.put("serviceName", pathArray[4]);
         return logContent;
       })
-      .addOutput(consoleOutput));
+      .addOutput(esOutput));
 
   }
 }

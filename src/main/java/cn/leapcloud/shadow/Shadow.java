@@ -71,6 +71,7 @@ public class Shadow {
       if (asyncResult.failed()) {
         future.fail(asyncResult.cause());
       } else {
+
         future.complete();
       }
     });
