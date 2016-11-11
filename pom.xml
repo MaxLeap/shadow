@@ -9,13 +9,13 @@
   <version>1.0.0-SNAPSHOT</version>
 
   <properties>
-    <log4j2.version>2.5</log4j2.version>
+    <log4j2.version>2.7</log4j2.version>
     <slf4j.version>1.7.21</slf4j.version>
     <vertx-stack.version>3.3.3</vertx-stack.version>
     <junit.version>4.12</junit.version>
 
     <kafka.version>0.10.0.1</kafka.version>
-    <plugin.docker.version>0.4.11</plugin.docker.version>
+    <plugin.docker.version>0.4.13</plugin.docker.version>
     <plugin.maven.compile.version>3.3</plugin.maven.compile.version>
   </properties>
 
@@ -114,31 +114,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>docker-maven-plugin</artifactId>
-        <version>${plugin.docker.version}</version>
-        <configuration>
-          <imageName>maxleap/${project.artifactId}:${project.version}</imageName>
-          <dockerDirectory>docker</dockerDirectory>
-          <resources>
-            <resource>
-              <targetPath>/</targetPath>
-              <directory>${project.build.directory}/${project.build.finalName}</directory>
-              <include>*.*</include>
-              <include>**/*</include>
-            </resource>
-          </resources>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>deploy</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
           <appendAssemblyId>false</appendAssemblyId>
@@ -152,6 +127,31 @@
             <phase>package</phase>
             <goals>
               <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>${plugin.docker.version}</version>
+        <configuration>
+          <imageName>maxleap/${project.artifactId}:${project.version}</imageName>
+          <dockerDirectory>${project.build.directory}/classes/docker</dockerDirectory>
+          <resources>
+            <resource>
+              <targetPath>/</targetPath>
+              <directory>${project.build.directory}/${project.build.finalName}</directory>
+              <include>*.*</include>
+              <include>**/*</include>
+            </resource>
+          </resources>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
             </goals>
           </execution>
         </executions>

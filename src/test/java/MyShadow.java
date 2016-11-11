@@ -24,8 +24,7 @@ public class MyShadow extends AbsShadowDSL {
   @Override
   protected void start() {
     //output
-    ShadowOutput<Object, String, String, String> consoleOutput = new ConsoleOutput()
-      .handler((data, config) -> data.toString());
+    ShadowOutput<Object, String, String, String> consoleOutput = new ConsoleOutput().encode(String::toString);
     addShadowOutput(consoleOutput);
 
     ShadowOutput<JsonObject, JsonObject, String, String> httpJsonOutput = new HttpJsonOutput()

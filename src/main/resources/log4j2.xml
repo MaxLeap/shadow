@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
   <Appenders>
-    <RollingFile name="RollingJsonFile" fileName="/opt/logs/tools/shadow/shadow-json.log"
-                 filePattern="/opt/logs/tools/shadow/shadow-json.%i">
+    <RollingFile name="RollingFile" fileName="/opt/logs/tools/shadow/shadow.log"
+                 filePattern="/opt/logs/tools/shadow/shadow.%i">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} - %p - %l - %t - %m%n"/>
       <DefaultRolloverStrategy max="2"/>
       <Policies>
         <SizeBasedTriggeringPolicy size="50 MB"/>
@@ -10,14 +11,14 @@
     </RollingFile>
 
     <Console name="Console">
-      <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} - %p - %l - %t - %m%n"/>
     </Console>
   </Appenders>
 
   <Loggers>
     <Root level="INFO">
-      <AppenderRef ref="Console"/>
-      <AppenderRef ref="RollingJsonFile"/>
+      <!--<AppenderRef ref="Console"/>-->
+      <AppenderRef ref="RollingFile"/>
     </Root>
   </Loggers>
 </Configuration>

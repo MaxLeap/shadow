@@ -32,9 +32,8 @@ public class KafkaInput<K, V, T, R>
     consumer.subscribe(topics.getList());
     new Thread(() -> {
       while (isRunning) {
-        System.out.println("try to get kafka message.");
         ConsumerRecords<K, V> records = consumer.poll(timeout);
-        records.forEach(this::accept);
+        records.forEach(this);
       }
     }, "KafkaConsumerThread").start();
     logger.info("Start kafka consumer, on broker " + config.getJsonObject("props").getString("bootstrap.servers"));
