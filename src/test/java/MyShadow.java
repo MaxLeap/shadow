@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -20,6 +21,15 @@ import java.util.regex.Pattern;
  * Created by stream.
  */
 public class MyShadow extends AbsShadowDSL {
+
+  private JsonObject kafkaConfig = new JsonObject()
+    .put("bootstrap.servers", "0.0.0.0:9092")
+    .put("group.id", "kafkaShadowConsumer")
+    .put("enable.auto.commit", true)
+    .put("auto.commit.interval.ms", 5000)
+    .put("session.timeout.ms", 30000)
+    .put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+    .put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
   @Override
   protected void start() {
@@ -74,17 +84,43 @@ public class MyShadow extends AbsShadowDSL {
       .handler((futureBody, config) -> futureBody)
       .addOutput(httpJsonOutput));
 
-    //kafka input
-    addShadowInput(new KafkaInput<Integer, String, JsonObject, JsonObject>()
+    //leapcloud rpc trace kafka input
+    addShadowInput(new KafkaInput<String, String, JsonObject, JsonObject>()
       .config(new JsonObject()
-        .put("props", new JsonObject()
-          .put("bootstrap.servers", "0.0.0.0:9092")
-          .put("group.id", "kafkaConsumer")
-          .put("enable.auto.commit", true)
-          .put("auto.commit.interval.ms", 5000)
-          .put("session.timeout.ms", 30000)
-          .put("key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer")
-          .put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"))
+        .put("props", kafkaConfig)
+        .put("topics", new JsonArray().add("leapCloudRPC"))
+        .put("pollTimeout", 10000))
+      .matchFunction((record, config) -> config.getJsonArray("topics").getList().contains(record.topic()))
+      .decode(record -> new JsonObject(record.value()))
+      .handler((value, config) -> {
+        JsonObject traceLog = new JsonObject();
+        LocalDateTime startTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(value.getLong("startTime")), ZoneId.of("GMT"));
+        LocalDateTime endTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(value.getLong("endTime")), ZoneId.of("GMT"));
+        String startTimeStr = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(startTime);
+        String endTimeStr = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(endTime);
+        //
+        traceLog.put("@timestamp", startTimeStr);
+        traceLog.put("traceID", value.getString("traceID"));
+        traceLog.put("serviceName", value.getString("serviceName"));
+        traceLog.put("methodName", value.getString("methodName"));
+        traceLog.put("args", value.getString("args"));
+        traceLog.put("response", value.getString("response"));
+        traceLog.put("exceptionMessage", value.getString("exceptionMessage"));
+        traceLog.put("startTime", startTimeStr);
+        traceLog.put("endTime", endTimeStr);
+        traceLog.put("spentTime", value.getString("spentTime"));
+        traceLog.put("isBegin", value.getBoolean("isBegin"));
+        traceLog.put("isSuccess", value.getBoolean("isSuccess"));
+        //
+        traceLog.put("URI", "/tools-rpcTrace-" + startTime.getYear() + "." + startTime.getMonthValue() + "." + startTime.getDayOfMonth());
+        return traceLog;
+      })
+      .addOutput(esOutput));
+
+    //leapcloud log kafka input
+    addShadowInput(new KafkaInput<String, String, JsonObject, JsonObject>()
+      .config(new JsonObject()
+        .put("props", kafkaConfig)
         .put("topics", new JsonArray().add("maxleapLogTopic"))
         .put("pollTimeout", 10000))
       .matchFunction((record, config) -> config.getJsonArray("topics").getList().contains(record.topic()))
