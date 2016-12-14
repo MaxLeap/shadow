@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class Shadow {
 
   private static final Logger logger = LoggerFactory.getLogger(Shadow.class);
+  private static final String DSL_FILE_PATH = "./conf/Shadow.java";
   private AbsShadowDSL shadowDSL;
   private Vertx vertx;
 
@@ -43,8 +44,8 @@ public class Shadow {
   public Future<Void> startShadowDSL() {
     Future<Void> future = Future.future();
     vertx.exceptionHandler(throwable -> logger.error("internal exception.", throwable));
-    if (vertx.fileSystem().existsBlocking("Shadow.java")) {
-      CompilingClassLoader compilingLoader = new CompilingClassLoader(this.getClass().getClassLoader(), "Shadow.java");
+    if (vertx.fileSystem().existsBlocking(DSL_FILE_PATH)) {
+      CompilingClassLoader compilingLoader = new CompilingClassLoader(this.getClass().getClassLoader(), DSL_FILE_PATH);
       String className = compilingLoader.resolveMainClassName();
       try {
         Class clazz = compilingLoader.loadClass(className);

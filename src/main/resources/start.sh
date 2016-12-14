@@ -11,7 +11,7 @@
 #debug Options
 #JVM_OPTS="$JVM_OPTS -Xdebug -Xrunjdwp:transport=dt_socket,address=8065,server=y,suspend=n"
 
-MAIN_CLASS="com.maxleap.shadow.ShadowMain"
+MAIN_CLASS="cn.leapcloud.shadow.Shadow"
 #------------------------------------------------------------------------------------------
 cd `dirname $0`
 BASE_DIR="`pwd -P`"

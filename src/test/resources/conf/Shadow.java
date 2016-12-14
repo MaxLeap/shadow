@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 /**
  * Created by stream.
  */
-public class MyShadow extends AbsShadowDSL {
+public class Shadow extends AbsShadowDSL {
 
   private JsonObject kafkaConfig = new JsonObject()
     .put("bootstrap.servers", "10.10.10.123:9092,10.10.10.135:9092")

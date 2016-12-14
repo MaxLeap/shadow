@@ -1,29 +1,25 @@
 import cn.leapcloud.shadow.AbsShadowDSL;
 import cn.leapcloud.shadow.ShadowOutput;
-import cn.leapcloud.shadow.impl.input.HttpJsonInput;
 import cn.leapcloud.shadow.impl.output.ConsoleOutput;
 import cn.leapcloud.shadow.impl.output.HttpJsonOutput;
 import cn.leapcloud.shadow.plugins.kafka.KafkaInput;
-import io.vertx.core.Future;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Created by stream.
  */
-public class Shadow extends AbsShadowDSL {
+public class ShadowUAT extends AbsShadowDSL {
 
   private JsonObject kafkaConfig = new JsonObject()
-    .put("bootstrap.servers", "0.0.0.0:9092")
+    .put("bootstrap.servers", "10.10.10.123:9092,10.10.10.135:9092")
     .put("group.id", "kafkaShadowConsumer")
     .put("enable.auto.commit", true)
     .put("auto.commit.interval.ms", 5000)
@@ -37,19 +33,11 @@ public class Shadow extends AbsShadowDSL {
     ShadowOutput<Object, String, String, String> consoleOutput = new ConsoleOutput().encode(String::toString);
     addShadowOutput(consoleOutput);
 
-    ShadowOutput<JsonObject, JsonObject, String, String> httpJsonOutput = new HttpJsonOutput()
-      .config(new JsonObject()
-        .put("defaultURI", "/")
-        .put("hosts", new JsonArray().add("127.0.0.1:8081")))
-      .tokenFunction((data, config) -> Optional.ofNullable(data.getString("defaultURI", config.getString("defaultURI"))))
-      .encode(JsonObject::encode);
-    addShadowOutput(httpJsonOutput);
-
     //es output
     ShadowOutput<JsonObject, JsonObject, String, String> esOutput = new HttpJsonOutput()
       .config(new JsonObject()
         .put("defaultURI", "/default/logs")
-        .put("hosts", new JsonArray().add("0.0.0.0:9200")))
+        .put("hosts", new JsonArray().add("10.10.10.149:9200")))
       .tokenFunction((data, config) -> Optional.ofNullable(data.getString("URI", config.getString("defaultURI"))))
       .handler((data, config) -> {
         //delete redundancy field.
@@ -60,59 +48,50 @@ public class Shadow extends AbsShadowDSL {
     addShadowOutput(esOutput);
 
     //==================================================================================================================
-    //input
-    addShadowInput(new HttpJsonInput()
-      .config(new JsonObject()
-        .put("host", "127.0.0.1")
-        .put("port", 8082)
-        .put("uriPatterns", new JsonArray().add("/log1").add("/log2")))
-      .matchFunction((request, config) -> {
-        if (HttpMethod.POST == request.method()) {
-          @SuppressWarnings("unchecked")
-          List<String> uriPatterns = config.getJsonArray("uriPatterns").getList();
-          for (String pattern : uriPatterns)
-            if (Pattern.matches(pattern, request.uri()))
-              return true;
-        }
-        return false;
-      })
-      .decode(request -> {
-        Future<JsonObject> body = Future.future();
-        request.bodyHandler(buffer -> body.complete(buffer.toJsonObject())).exceptionHandler(body::fail);
-        return body;
-      })
-      .handler((futureBody, config) -> futureBody)
-      .addOutput(httpJsonOutput));
 
     //leapcloud rpc trace kafka input
     addShadowInput(new KafkaInput<String, String, JsonObject, JsonObject>()
       .config(new JsonObject()
         .put("props", kafkaConfig)
-        .put("topics", new JsonArray().add("leapCloudRPC"))
+        .put("topics", new JsonArray().add("leapCloudRPCTrace"))
         .put("pollTimeout", 10000))
       .matchFunction((record, config) -> config.getJsonArray("topics").getList().contains(record.topic()))
       .decode(record -> new JsonObject(record.value()))
       .handler((value, config) -> {
         JsonObject traceLog = new JsonObject();
-        LocalDateTime startTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(value.getLong("startTime")), ZoneId.of("GMT"));
-        LocalDateTime endTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(value.getLong("endTime")), ZoneId.of("GMT"));
+
+        JsonObject rpcJson = new JsonObject(value.getString("message"));
+        OffsetDateTime startTime = OffsetDateTime.ofInstant(Instant.ofEpochMilli(rpcJson.getLong("startTime")), ZoneId.of("GMT"));
+        OffsetDateTime endTime = OffsetDateTime.ofInstant(Instant.ofEpochMilli(rpcJson.getLong("endTime")), ZoneId.of("GMT"));
         String startTimeStr = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(startTime);
         String endTimeStr = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(endTime);
         //
         traceLog.put("@timestamp", startTimeStr);
-        traceLog.put("traceID", value.getString("traceID"));
-        traceLog.put("serviceName", value.getString("serviceName"));
-        traceLog.put("methodName", value.getString("methodName"));
-        traceLog.put("args", value.getString("args"));
-        traceLog.put("response", value.getString("response"));
-        traceLog.put("exceptionMessage", value.getString("exceptionMessage"));
+        traceLog.put("traceID", rpcJson.getString("traceID"));
+        traceLog.put("serviceName", rpcJson.getString("serviceName"));
+        traceLog.put("methodName", rpcJson.getString("methodName"));
+        traceLog.put("args", rpcJson.getString("args"));
+        traceLog.put("response", rpcJson.getString("response"));
+        if (rpcJson.getString("exceptionMessage") != null) {
+          traceLog.put("exceptionMessage", rpcJson.getString("exceptionMessage"));
+        } else {
+          traceLog.put("isSuccess", true);
+        }
         traceLog.put("startTime", startTimeStr);
         traceLog.put("endTime", endTimeStr);
-        traceLog.put("spentTime", value.getString("spentTime"));
-        traceLog.put("isBegin", value.getBoolean("isBegin"));
-        traceLog.put("isSuccess", value.getBoolean("isSuccess"));
+        traceLog.put("spentTime", rpcJson.getInteger("spentTime"));
+        traceLog.put("isBegin", rpcJson.getBoolean("isBegin", false));
+
+        traceLog.put("source_host", value.getJsonObject("beat").getString("hostname"));
+        traceLog.put("source_ip", value.getJsonObject("fields").getString("ip"));
+        //get service name
+        String[] pathArray = value.getString("source").split("/");
+        String serviceName = pathArray[4].toLowerCase();
+        traceLog.put("serviceName", serviceName);
         //
-        traceLog.put("URI", "/tools-rpcTrace-" + startTime.getYear() + "." + startTime.getMonthValue() + "." + startTime.getDayOfMonth());
+        String monthNumber = startTime.getMonthValue() < 10 ? "0" + startTime.getMonthValue() : "" + startTime.getMonthValue();
+        String dayNumber = startTime.getDayOfMonth() < 10 ? "0" + startTime.getDayOfMonth() : "" + startTime.getDayOfMonth();
+        traceLog.put("URI", "/tools-rpctrace-" + startTime.getYear() + "." + monthNumber + "." + dayNumber + "/rpctrace");
         return traceLog;
       })
       .addOutput(esOutput));
@@ -121,12 +100,12 @@ public class Shadow extends AbsShadowDSL {
     addShadowInput(new KafkaInput<String, String, JsonObject, JsonObject>()
       .config(new JsonObject()
         .put("props", kafkaConfig)
-        .put("topics", new JsonArray().add("maxleapLogTopic"))
+        .put("topics", new JsonArray().add("leapCloudLog"))
         .put("pollTimeout", 10000))
       .matchFunction((record, config) -> config.getJsonArray("topics").getList().contains(record.topic()))
       .decode(record -> new JsonObject(record.value()))
       .handler((value, config) -> {
-        //file beat 发过来的文件，提取出 file path, host, ip, 然后解析 java log 转成新的json,
+        //file beat
         JsonObject logContent = new JsonObject();
         String message = value.getString("message");
         String[] messageArr = message.split(" - ", 5);
@@ -142,16 +121,14 @@ public class Shadow extends AbsShadowDSL {
         logContent.put("source_host", value.getJsonObject("beat").getString("hostname"));
         logContent.put("source_ip", value.getJsonObject("fields").getString("ip"));
 
-        //根据日志路径转换为ES的索引路径,去掉opt以及相关日志目录。只取/tools/shadow,组合成/tools-shadow
         String[] pathArray = value.getString("source").split("/");
-        //每个索引需要带上日期，也就是说一天一片 example: /tools/shadow-2016.08.19/[4]
         String esDate = dateTimeStr.split(" ")[0].replace("-", ".");
-        logContent.put("URI", "/" + pathArray[3] + "-" + pathArray[4] + "-" + esDate);
+        String serviceName = pathArray[4].toLowerCase();
+        logContent.put("URI", "/" + pathArray[3] + "-" + serviceName + "-" + esDate + "/" + pathArray[4]);
         //for log stash report
-        logContent.put("serviceName", pathArray[4]);
+        logContent.put("serviceName", serviceName);
         return logContent;
       })
       .addOutput(esOutput));
-
   }
 }
