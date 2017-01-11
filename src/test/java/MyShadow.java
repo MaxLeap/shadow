@@ -32,6 +32,15 @@ public class MyShadow extends AbsShadowDSL {
     .put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
     .put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
+  private String maskKeyString(String content, String prefixString, String maskString) {
+    int passwordPosition = content.indexOf(prefixString);
+    int prefixStringLength = prefixString.length();
+    int maskStringLength = maskString.length();
+    return content.substring(0, passwordPosition + prefixStringLength)
+      + maskString + content.substring(passwordPosition + prefixStringLength + maskStringLength);
+  }
+
+
   @Override
   protected void start() {
     //output
@@ -104,7 +113,7 @@ public class MyShadow extends AbsShadowDSL {
         //
         traceLog.put("@timestamp", startTimeStr);
         traceLog.put("traceID", rpcJson.getString("traceID"));
-        traceLog.put("serviceName", rpcJson.getString("serviceName"));
+        traceLog.put("SPI", rpcJson.getString("serviceName"));
         traceLog.put("methodName", rpcJson.getString("methodName"));
         traceLog.put("args", rpcJson.getString("args"));
         traceLog.put("response", rpcJson.getString("response"));
@@ -166,5 +175,26 @@ public class MyShadow extends AbsShadowDSL {
         return logContent;
       })
       .addOutput(esOutput));
+
+    //leapcloud nginx log kafka input
+    addShadowInput(new KafkaInput<String, String, JsonObject, JsonObject>()
+      .config(new JsonObject()
+        .put("props", kafkaConfig)
+        .put("topics", new JsonArray().add("nginxLog"))
+        .put("pollTimeout", 10000))
+      .matchFunction((record, config) -> config.getJsonArray("topics").getList().contains(record.topic()))
+      .decode(record -> {
+        //把\x22全部替换成单引号,并且转换成json对象
+        String jsonStr = record.value().replaceAll("\\\\x22", "'");
+        return new JsonObject(jsonStr);
+      })
+      .handler((value, config) -> {
+        //过滤掉request_body里的password
+        String requestBody = value.getString("request_body");
+        if (requestBody != null && requestBody.contains("'password':")) {
+          value.put("request_body", maskKeyString(requestBody, "'password':", "hidden"));
+        }
+        return value;
+      }).addOutput(esOutput));
   }
 }

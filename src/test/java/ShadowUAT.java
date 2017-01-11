@@ -68,7 +68,7 @@ public class ShadowUAT extends AbsShadowDSL {
         //
         traceLog.put("@timestamp", startTimeStr);
         traceLog.put("traceID", rpcJson.getString("traceID"));
-        traceLog.put("serviceName", rpcJson.getString("serviceName"));
+        traceLog.put("SPI", rpcJson.getString("serviceName"));
         traceLog.put("methodName", rpcJson.getString("methodName"));
         traceLog.put("args", rpcJson.getString("args"));
         traceLog.put("response", rpcJson.getString("response"));

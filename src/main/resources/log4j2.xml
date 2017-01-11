@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
   <Appenders>
-    <RollingFile name="RollingFile" fileName="/opt/logs/tools/shadow/shadow.log"
-                 filePattern="/opt/logs/tools/shadow/shadow.%i">
+    <RollingFile name="RollingFile" fileName="logs/shadow.log"
+                 filePattern="logs/shadow.%i">
       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss:SSS} - %p - %l - %t - %m%n"/>
       <DefaultRolloverStrategy max="2"/>
       <Policies>
