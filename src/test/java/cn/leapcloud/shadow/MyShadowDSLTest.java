@@ -4,18 +4,20 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * Created by stream.
@@ -23,13 +25,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RunWith(VertxUnitRunner.class)
 public class MyShadowDSLTest {
 
-  @Rule
-  public RunTestOnContext rule = new RunTestOnContext();
+  private static Supplier<String> kafkaAddress = () -> {
+    String address = "localhost";
+    try {
+      address = InetAddress.getByName("kafka").getHostAddress();
+    } catch (UnknownHostException e) {
+      //
+    }
+    return address;
+  };
 
+  private static String KAFKA_ADDRESS = kafkaAddress.get();
+
+  @Ignore
   @Test
   public void runSimpleMyShadowDSL(TestContext context) {
     Async async = context.async();
-    Vertx vertx = rule.vertx();
+    Vertx vertx = Vertx.vertx();
     Shadow shadow = new Shadow(vertx);
     //mock output server
     vertx.createHttpServer().requestHandler(request ->
@@ -39,12 +51,12 @@ public class MyShadowDSLTest {
         async.complete();
         request.response().end();
       }))
-      .listen(8081, "127.0.0.1", event -> {
+      .listen(8081, "localhost", event -> {
         //
         shadow.startShadowDSL().setHandler(asyncResult -> {
           if (asyncResult.succeeded()) {
             vertx.createHttpClient()
-              .post(8082, "127.0.0.1", "/log1")
+              .post(8082, "localhost", "/log1")
               .putHeader("Content-Type", "application/json")
               .handler(response -> context.assertEquals(200, response.statusCode()))
               .end(new JsonObject().put("foo", "bar").encode());
@@ -56,10 +68,10 @@ public class MyShadowDSLTest {
   }
 
   @Test
-  public void maxleapLog(TestContext context) {
+  public void maxleapLog(TestContext context) throws InterruptedException {
     Async async = context.async();
     AtomicBoolean finish = new AtomicBoolean(false);
-    Vertx vertx = rule.vertx();
+    Vertx vertx = Vertx.vertx();
     Shadow shadow = new Shadow(vertx);
     String sampleLog = "{\n" +
       "      \"@timestamp\": \"2016-11-09T07:00:51.157Z\",\n" +
@@ -79,12 +91,12 @@ public class MyShadowDSLTest {
       "    }";
     //mock kafka producer
     JsonObject kafkaConfig = new JsonObject()
-      .put("bootstrap.servers", "0.0.0.0:9092")
+      .put("bootstrap.servers", KAFKA_ADDRESS + ":9092")
       .put("client.id", "KafkaProducer")
       .put("key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer")
       .put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     KafkaProducer<Integer, String> producer = new KafkaProducer<>(kafkaConfig.getMap());
-    ProducerRecord<Integer, String> record = new ProducerRecord<>("maxleapLogTopic", sampleLog.hashCode(), sampleLog);
+    ProducerRecord<Integer, String> record = new ProducerRecord<>("leapCloudLog", sampleLog.hashCode(), sampleLog);
     vertx.executeBlocking(event -> producer.send(record, (metadata, exception) -> {
       if (exception != null) {
         event.fail(exception);
@@ -123,6 +135,7 @@ public class MyShadowDSLTest {
     });
   }
 
+  @Ignore
   @Test
   public void testEx() {
     String content = "2016-11-09 14:27:47:531 - INFO - com.maxleap.log4j2.LoggerTest.log4j2(LoggerTest.java:19) - main - info";

@@ -11,11 +11,11 @@
   <properties>
     <log4j2.version>2.7</log4j2.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <vertx-stack.version>3.3.3</vertx-stack.version>
+    <vertx-stack.version>3.4.1</vertx-stack.version>
     <junit.version>4.12</junit.version>
 
     <kafka.version>0.10.0.1</kafka.version>
-    <es.client.version>5.1.1</es.client.version>
+    <es.client.version>5.2.2</es.client.version>
     <plugin.docker.version>0.4.13</plugin.docker.version>
     <plugin.maven.compile.version>3.3</plugin.maven.compile.version>
   </properties>

@@ -40,7 +40,6 @@ public class MyShadow extends AbsShadowDSL {
       + maskString + content.substring(passwordPosition + prefixStringLength + maskStringLength);
   }
 
-
   @Override
   protected void start() {
     //output

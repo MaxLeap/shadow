@@ -9,6 +9,8 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -16,6 +18,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -23,8 +26,21 @@ import java.util.regex.Pattern;
  */
 public class Shadow extends AbsShadowDSL {
 
+  private static Supplier<String> kafkaAddress = () -> {
+    String address = "localhost";
+    try {
+      address = InetAddress.getByName("kafka").getHostAddress();
+    } catch (UnknownHostException e) {
+      //
+    }
+    return address;
+  };
+
+  private static String KAFKA_ADDRESS = kafkaAddress.get();
+  private static String ES_ADDRESS = Optional.ofNullable(System.getenv("ES_PORT_9200_TCP_ADDR")).orElse("localhost");
+
   private JsonObject kafkaConfig = new JsonObject()
-    .put("bootstrap.servers", "10.10.10.123:9092,10.10.10.135:9092")
+    .put("bootstrap.servers", KAFKA_ADDRESS + ":9092")
     .put("group.id", "kafkaShadowConsumer")
     .put("enable.auto.commit", true)
     .put("auto.commit.interval.ms", 5000)
@@ -41,7 +57,7 @@ public class Shadow extends AbsShadowDSL {
     ShadowOutput<JsonObject, JsonObject, String, String> httpJsonOutput = new HttpJsonOutput()
       .config(new JsonObject()
         .put("defaultURI", "/")
-        .put("hosts", new JsonArray().add("127.0.0.1:8081")))
+        .put("hosts", new JsonArray().add("localhost:8081")))
       .tokenFunction((data, config) -> Optional.ofNullable(data.getString("defaultURI", config.getString("defaultURI"))))
       .encode(JsonObject::encode);
     addShadowOutput(httpJsonOutput);
@@ -50,7 +66,7 @@ public class Shadow extends AbsShadowDSL {
     ShadowOutput<JsonObject, JsonObject, String, String> esOutput = new HttpJsonOutput()
       .config(new JsonObject()
         .put("defaultURI", "/default/logs")
-        .put("hosts", new JsonArray().add("10.10.10.149:9200")))
+        .put("hosts", new JsonArray().add(ES_ADDRESS + ":9200")))
       .tokenFunction((data, config) -> Optional.ofNullable(data.getString("URI", config.getString("defaultURI"))))
       .handler((data, config) -> {
         //delete redundancy field.
